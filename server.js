@@ -235,10 +235,10 @@ app.get('/api/queue', (req, res) => {
 });
 
 app.post('/api/queue', (req, res) => {
-  const { candidate_name, site_id, room_id, step_id } = req.body;
+  const { candidate_name, site_id, room_id, step_id, status } = req.body;
   try {
-    const result = db.prepare('INSERT INTO queue (candidate_name, site_id, room_id, step_id) VALUES (?, ?, ?, ?)')
-      .run(candidate_name, site_id, room_id, step_id);
+    const result = db.prepare('INSERT INTO queue (candidate_name, site_id, room_id, step_id, status) VALUES (?, ?, ?, ?, ?)')
+      .run(candidate_name, site_id, room_id, step_id, status || 'waiting');
     
     const newEntry = db.prepare(`
       SELECT q.*, s.name as site_name, r.room_number, st.name as step_name

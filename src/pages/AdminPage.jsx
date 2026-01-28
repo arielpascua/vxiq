@@ -27,7 +27,8 @@ export default function AdminPage() {
     candidate_name: '',
     site_id: '',
     room_id: '',
-    step_id: ''
+    step_id: '',
+    status: 'waiting'
   });
 
   // Load all data
@@ -321,7 +322,7 @@ export default function AdminPage() {
             <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-vxi-orange-500" />
             Add Candidate
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             <div className="sm:col-span-2 lg:col-span-2">
               <label className="block text-xs sm:text-sm text-vxi-white-300 mb-1.5 sm:mb-2 font-medium">Candidate Name</label>
               <input
@@ -357,6 +358,17 @@ export default function AdminPage() {
                 {steps.map(step => (
                   <option key={step.id} value={step.id}>{step.name}</option>
                 ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs sm:text-sm text-vxi-white-300 mb-1.5 sm:mb-2 font-medium">Status</label>
+              <select
+                value={form.status}
+                onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
+                className="w-full bg-vxi-black-50 border border-vxi-white-300/20 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 text-sm focus:ring-2 focus:ring-vxi-orange-500 focus:border-vxi-orange-500 outline-none transition-all text-vxi-white"
+              >
+                <option value="waiting">Waiting</option>
+                <option value="ongoing">Ongoing</option>
               </select>
             </div>
           </div>
@@ -424,7 +436,11 @@ export default function AdminPage() {
                 <div
                   key={item.id}
                   className={`p-3 sm:p-5 hover:bg-vxi-black-50 transition-all ${
-                    item.status === 'called' ? 'bg-vxi-orange-500/10 border-l-4 border-vxi-orange-500' : ''
+                    item.status === 'called'
+                      ? 'bg-green-500/10 border-l-4 border-green-500'
+                      : item.status === 'ongoing'
+                      ? 'bg-blue-500/10 border-l-4 border-blue-500'
+                      : ''
                   } ${selectedCandidates.includes(item.id) ? 'bg-vxi-orange-500/5 border-l-4 border-vxi-orange-400' : ''}`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -436,10 +452,25 @@ export default function AdminPage() {
                         className="w-5 h-5 mt-1 sm:mt-0 rounded border-2 border-vxi-orange-500 bg-vxi-black-50 text-vxi-orange-500 focus:ring-2 focus:ring-vxi-orange-500 cursor-pointer flex-shrink-0"
                       />
                       <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full mt-1.5 sm:mt-0 flex-shrink-0 ${
-                        item.status === 'called' ? 'bg-vxi-orange-500 animate-pulse shadow-lg shadow-vxi-orange-500/50' : 'bg-vxi-white-200'
+                        item.status === 'called'
+                          ? 'bg-green-500 animate-pulse shadow-lg shadow-green-500/50'
+                          : item.status === 'ongoing'
+                          ? 'bg-blue-500 shadow-lg shadow-blue-500/50'
+                          : 'bg-yellow-500'
                       }`} />
                       <div className="min-w-0 flex-1">
-                        <p className="font-bold text-base sm:text-xl text-vxi-white mb-1 truncate">{item.candidate_name}</p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-bold text-base sm:text-xl text-vxi-white truncate">{item.candidate_name}</p>
+                          <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                            item.status === 'called'
+                              ? 'bg-green-500/20 text-green-400 border border-green-500/50'
+                              : item.status === 'ongoing'
+                              ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
+                              : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'
+                          }`}>
+                            {item.status === 'called' ? 'Called' : item.status === 'ongoing' ? 'Ongoing' : 'Waiting'}
+                          </span>
+                        </div>
                         <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-vxi-white-300">
                           <span className="flex items-center gap-1">
                             <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-vxi-orange-500" />
@@ -453,7 +484,7 @@ export default function AdminPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 ml-8 sm:ml-0">
-                      {item.status === 'waiting' && (
+                      {(item.status === 'waiting' || item.status === 'ongoing') && (
                         <button
                           onClick={() => callCandidate(item)}
                           className="flex items-center gap-1.5 sm:gap-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all font-semibold hover:scale-105 shadow-lg text-white text-sm"

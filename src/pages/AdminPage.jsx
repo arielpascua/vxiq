@@ -180,7 +180,16 @@ export default function AdminPage() {
     }
 
     try {
-      await queueAPI.bulkMove(selectedCandidates, bulkStepId, bulkRoomId);
+      const result = await queueAPI.bulkMove(selectedCandidates, bulkStepId, bulkRoomId);
+
+      // Announce all moved candidates together
+      if (result.candidates && result.candidates.length > 0) {
+        const names = result.candidates.map(c => c.candidate_name).join(', ');
+        const { room_number, step_name } = result.candidates[0];
+        const announcement = `${names}, please proceed to ${room_number} for your ${step_name}.`;
+        speak(announcement);
+      }
+
       setShowBulkModal(false);
       setBulkRoomId('');
       setBulkStepId('');

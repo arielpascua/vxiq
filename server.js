@@ -285,20 +285,31 @@ app.post('/api/queue/bulk-move', (req, res) => {
 
   try {
     let updated = 0;
-    const updateStmt = db.prepare('UPDATE queue SET step_id = ?, room_id = ?, status = ? WHERE id = ?');
+    const updateStmt = db.prepare('UPDATE queue SET step_id = ?, room_id = ?, status = ?, call_count = 1, called_at = CURRENT_TIMESTAMP WHERE id = ?');
 
     candidate_ids.forEach(id => {
       try {
-        updateStmt.run(step_id, room_id, 'waiting', id);
+        updateStmt.run(step_id, room_id, 'called', id);
         updated++;
       } catch (err) {
         console.error(`Failed to update candidate ${id}:`, err);
       }
     });
 
+    // Get updated candidates info for TTS
+    const placeholders = candidate_ids.map(() => '?').join(',');
+    const movedCandidates = db.prepare(`
+      SELECT q.candidate_name, r.room_number, st.name as step_name
+      FROM queue q
+      LEFT JOIN rooms r ON q.room_id = r.id
+      LEFT JOIN steps st ON q.step_id = st.id
+      WHERE q.id IN (${placeholders})
+    `).all(...candidate_ids);
+
     res.json({
       message: `Successfully moved ${updated} candidate(s) to selected step`,
-      updated
+      updated,
+      candidates: movedCandidates
     });
   } catch (err) {
     console.error('Bulk move error:', err);

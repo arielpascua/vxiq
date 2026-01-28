@@ -15,7 +15,9 @@ export default function AdminPage() {
   const [filter, setFilter] = useState('');
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [bulkRoomId, setBulkRoomId] = useState('');
+  const [bulkStepId, setBulkStepId] = useState('');
   const [allRooms, setAllRooms] = useState([]);
+  const [selectedCandidates, setSelectedCandidates] = useState([]);
 
   const [form, setForm] = useState({
     candidate_name: '',
@@ -88,21 +90,31 @@ export default function AdminPage() {
   }, [filter]);
 
   useEffect(() => {
-    // Load rooms for the filtered site (for bulk operations)
-    const loadAllRooms = async () => {
-      if (filter) {
-        try {
-          const roomsData = await roomsAPI.getAll(filter);
-          setAllRooms(roomsData);
-        } catch (err) {
-          console.error('Failed to load rooms:', err);
+    // Load rooms based on selected candidates' sites
+    const loadRoomsForSelected = async () => {
+      if (selectedCandidates.length > 0) {
+        // Get unique site IDs from selected candidates
+        const selectedItems = queue.filter(q => selectedCandidates.includes(q.id));
+        const siteIds = [...new Set(selectedItems.map(item => item.site_id))];
+
+        if (siteIds.length === 1) {
+          // If all selected candidates are from the same site, load rooms for that site
+          try {
+            const roomsData = await roomsAPI.getAll(siteIds[0]);
+            setAllRooms(roomsData);
+          } catch (err) {
+            console.error('Failed to load rooms:', err);
+          }
+        } else {
+          // Multiple sites selected
+          setAllRooms([]);
         }
       } else {
         setAllRooms([]);
       }
     };
-    loadAllRooms();
-  }, [filter]);
+    loadRoomsForSelected();
+  }, [selectedCandidates, queue]);
 
   const addToQueue = async () => {
     if (!form.candidate_name.trim() || !form.site_id || !form.room_id || !form.step_id) {
@@ -148,31 +160,54 @@ export default function AdminPage() {
     }
   };
 
-  const handleBulkNextStep = async () => {
+  const handleBulkMove = async () => {
+    if (selectedCandidates.length === 0) {
+      alert('Please select at least one candidate');
+      return;
+    }
+
+    if (!bulkStepId) {
+      alert('Please select a step');
+      return;
+    }
+
     if (!bulkRoomId) {
       alert('Please select a room');
       return;
     }
 
-    const count = filteredQueue.length;
-    if (count === 0) {
-      alert('No candidates in queue to move');
-      return;
-    }
-
-    if (!confirm(`Move all ${count} candidate(s) to the next step and change to selected room?`)) {
+    const count = selectedCandidates.length;
+    if (!confirm(`Move ${count} selected candidate(s) to the selected step and room?`)) {
       return;
     }
 
     try {
-      const result = await queueAPI.bulkNextStep(filter || null, bulkRoomId);
+      const result = await queueAPI.bulkMove(selectedCandidates, bulkStepId, bulkRoomId);
       alert(result.message || `Successfully moved ${result.updated} candidate(s)`);
       setShowBulkModal(false);
       setBulkRoomId('');
+      setBulkStepId('');
+      setSelectedCandidates([]);
       loadQueue();
     } catch (err) {
       console.error('Failed to bulk move:', err);
       alert('Failed to move candidates. Please try again.');
+    }
+  };
+
+  const toggleCandidateSelection = (candidateId) => {
+    setSelectedCandidates(prev =>
+      prev.includes(candidateId)
+        ? prev.filter(id => id !== candidateId)
+        : [...prev, candidateId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedCandidates.length === filteredQueue.length) {
+      setSelectedCandidates([]);
+    } else {
+      setSelectedCandidates(filteredQueue.map(item => item.id));
     }
   };
 
@@ -292,14 +327,23 @@ export default function AdminPage() {
               </span>
             </h2>
             <div className="flex items-center gap-3">
-              {filteredQueue.length > 0 && (
+              {selectedCandidates.length > 0 && (
                 <button
                   onClick={() => setShowBulkModal(true)}
                   className="flex items-center gap-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 px-4 py-2 rounded-xl transition-all hover:scale-105 shadow-lg text-white font-medium"
-                  title="Move all to next step"
+                  title="Move selected candidates"
                 >
                   <ArrowRight className="w-5 h-5" />
-                  Next Step
+                  Move Selected ({selectedCandidates.length})
+                </button>
+              )}
+              {filteredQueue.length > 0 && (
+                <button
+                  onClick={toggleSelectAll}
+                  className="flex items-center gap-2 bg-vxi-black-50 hover:bg-vxi-black-400 border border-vxi-white-300/20 px-4 py-2 rounded-xl transition-all hover:scale-105 text-vxi-white-200"
+                  title={selectedCandidates.length === filteredQueue.length ? "Deselect all" : "Select all"}
+                >
+                  {selectedCandidates.length === filteredQueue.length ? 'Deselect All' : 'Select All'}
                 </button>
               )}
               <button
@@ -336,9 +380,15 @@ export default function AdminPage() {
                   key={item.id}
                   className={`p-5 flex items-center justify-between hover:bg-vxi-black-50 transition-all ${
                     item.status === 'called' ? 'bg-vxi-orange-500/10 border-l-4 border-vxi-orange-500' : ''
-                  }`}
+                  } ${selectedCandidates.includes(item.id) ? 'bg-vxi-orange-500/5 border-l-4 border-vxi-orange-400' : ''}`}
                 >
                   <div className="flex items-center gap-5">
+                    <input
+                      type="checkbox"
+                      checked={selectedCandidates.includes(item.id)}
+                      onChange={() => toggleCandidateSelection(item.id)}
+                      className="w-5 h-5 rounded border-2 border-vxi-orange-500 bg-vxi-black-50 text-vxi-orange-500 focus:ring-2 focus:ring-vxi-orange-500 cursor-pointer"
+                    />
                     <div className={`w-4 h-4 rounded-full ${
                       item.status === 'called' ? 'bg-vxi-orange-500 animate-pulse shadow-lg shadow-vxi-orange-500/50' : 'bg-vxi-white-200'
                     }`} />
@@ -389,14 +439,14 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Bulk Next Step Modal */}
+      {/* Bulk Move Modal */}
       {showBulkModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-vxi-black-100 rounded-2xl border-2 border-vxi-orange-500 shadow-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-2xl font-bold text-vxi-white flex items-center gap-2">
                 <ArrowRight className="w-7 h-7 text-vxi-orange-500" />
-                Move to Next Step
+                Move Selected Candidates
               </h3>
               <button
                 onClick={() => setShowBulkModal(false)}
@@ -407,13 +457,30 @@ export default function AdminPage() {
             </div>
 
             <p className="text-vxi-white-200 mb-6">
-              This will move all <span className="text-vxi-orange-500 font-bold">{filteredQueue.length}</span> candidate(s)
-              {filter && ` from ${sites.find(s => s.id.toString() === filter)?.name}`} to the next step in the recruitment process.
+              Moving <span className="text-vxi-orange-500 font-bold">{selectedCandidates.length}</span> selected candidate(s) to a new step and room.
             </p>
+
+            <div className="mb-4">
+              <label className="block text-sm text-vxi-white-300 mb-2 font-medium">
+                Select Target Step
+              </label>
+              <select
+                value={bulkStepId}
+                onChange={e => setBulkStepId(e.target.value)}
+                className="w-full bg-vxi-black-50 border-2 border-vxi-orange-500/50 rounded-xl px-4 py-3 text-vxi-white focus:ring-2 focus:ring-vxi-orange-500 outline-none"
+              >
+                <option value="">Choose a step...</option>
+                {steps.map(step => (
+                  <option key={step.id} value={step.id}>
+                    {step.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <div className="mb-6">
               <label className="block text-sm text-vxi-white-300 mb-2 font-medium">
-                Select New Room
+                Select Target Room
               </label>
               <select
                 value={bulkRoomId}
@@ -421,34 +488,46 @@ export default function AdminPage() {
                 className="w-full bg-vxi-black-50 border-2 border-vxi-orange-500/50 rounded-xl px-4 py-3 text-vxi-white focus:ring-2 focus:ring-vxi-orange-500 outline-none"
               >
                 <option value="">Choose a room...</option>
-                {filter ? (
+                {allRooms.length > 0 ? (
                   allRooms.map(room => (
                     <option key={room.id} value={room.id}>
                       Room {room.room_number} - {room.description || 'Interview Room'}
                     </option>
                   ))
                 ) : (
-                  <option value="" disabled>Please select a site filter first</option>
+                  <option value="" disabled>
+                    {selectedCandidates.length === 0
+                      ? 'Select candidates first'
+                      : queue.filter(q => selectedCandidates.includes(q.id)).map(q => q.site_id).filter((v, i, a) => a.indexOf(v) === i).length > 1
+                      ? 'Selected candidates are from different sites'
+                      : 'No rooms available'}
+                  </option>
                 )}
               </select>
-              {!filter && (
+              {selectedCandidates.length > 0 && allRooms.length === 0 && (
                 <p className="text-vxi-orange-400 text-sm mt-2">
-                  Please select a site from the filter dropdown above to see available rooms.
+                  {queue.filter(q => selectedCandidates.includes(q.id)).map(q => q.site_id).filter((v, i, a) => a.indexOf(v) === i).length > 1
+                    ? 'Please select candidates from the same site only.'
+                    : 'No rooms available for this site.'}
                 </p>
               )}
             </div>
 
             <div className="flex gap-3">
               <button
-                onClick={handleBulkNextStep}
-                disabled={!bulkRoomId}
+                onClick={handleBulkMove}
+                disabled={!bulkRoomId || !bulkStepId}
                 className="flex-1 bg-vxi-orange-500 hover:bg-vxi-orange-600 disabled:bg-vxi-black-50 disabled:text-vxi-white-400 disabled:cursor-not-allowed px-6 py-3 rounded-xl font-bold transition-all hover:scale-105 shadow-lg text-white flex items-center justify-center gap-2"
               >
                 <ArrowRight className="w-5 h-5" />
                 Confirm Move
               </button>
               <button
-                onClick={() => setShowBulkModal(false)}
+                onClick={() => {
+                  setShowBulkModal(false);
+                  setBulkRoomId('');
+                  setBulkStepId('');
+                }}
                 className="px-6 py-3 bg-vxi-black-50 hover:bg-vxi-black-400 border border-vxi-white-300/20 rounded-xl transition-all text-vxi-white-200"
               >
                 Cancel

@@ -259,6 +259,63 @@ app.put('/api/queue/:id/complete', (req, res) => {
   res.json({ success: true });
 });
 
+// Bulk move all candidates to next step and change room
+app.post('/api/queue/bulk-next-step', (req, res) => {
+  const { site_id, room_id } = req.body;
+
+  if (!room_id) {
+    return res.status(400).json({ error: 'Room ID is required' });
+  }
+
+  try {
+    // Get all active queue items for the site
+    let query = `
+      SELECT q.*, st.sequence as current_sequence
+      FROM queue q
+      LEFT JOIN steps st ON q.step_id = st.id
+      WHERE q.status != 'completed'
+    `;
+    let params = [];
+    if (site_id) {
+      query += ` AND q.site_id = ?`;
+      params.push(site_id);
+    }
+
+    const queueItems = db.prepare(query).all(...params);
+
+    if (queueItems.length === 0) {
+      return res.json({ message: 'No candidates to move', updated: 0 });
+    }
+
+    // Get all steps ordered by sequence
+    const steps = db.prepare('SELECT * FROM steps WHERE is_active = 1 ORDER BY sequence').all();
+
+    let updated = 0;
+    const updateStmt = db.prepare('UPDATE queue SET step_id = ?, room_id = ?, status = ? WHERE id = ?');
+
+    queueItems.forEach(item => {
+      // Find next step in sequence
+      const currentStepIndex = steps.findIndex(s => s.id === item.step_id);
+
+      if (currentStepIndex >= 0 && currentStepIndex < steps.length - 1) {
+        // Move to next step
+        const nextStep = steps[currentStepIndex + 1];
+        updateStmt.run(nextStep.id, room_id, 'waiting', item.id);
+        updated++;
+      } else {
+        // If already at last step, just change room and reset to waiting
+        updateStmt.run(item.step_id, room_id, 'waiting', item.id);
+        updated++;
+      }
+    });
+
+    res.json({ message: `Successfully moved ${updated} candidate(s) to next step`, updated });
+  } catch (err) {
+    console.error('Bulk next step error:', err);
+    res.status(500).json({ error: 'Failed to move candidates' });
+  }
+});
+
 app.delete('/api/queue/:id', (req, res) => {
   db.prepare('DELETE FROM queue WHERE id = ?').run(req.params.id);
   res.json({ success: true });

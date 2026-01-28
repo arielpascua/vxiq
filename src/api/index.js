@@ -55,6 +55,10 @@ export const queueAPI = {
   complete: (id) => fetchAPI(`/queue/${id}/complete`, { method: 'PUT' }),
   remove: (id) => fetchAPI(`/queue/${id}`, { method: 'DELETE' }),
   cleanup: () => fetchAPI('/queue/cleanup', { method: 'POST' }),
+  bulkNextStep: (siteId, roomId) => fetchAPI('/queue/bulk-next-step', {
+    method: 'POST',
+    body: JSON.stringify({ site_id: siteId, room_id: roomId })
+  }),
 };
 
 // TTS Function

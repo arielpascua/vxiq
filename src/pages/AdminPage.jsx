@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Volume2, Plus, Trash2, Monitor, Settings, Users, MapPin,
-  CheckCircle, RefreshCw, Clock
+  CheckCircle, RefreshCw, Clock, ArrowRight, X
 } from 'lucide-react';
 import { sitesAPI, roomsAPI, stepsAPI, queueAPI, speak } from '../api';
 
@@ -13,6 +13,9 @@ export default function AdminPage() {
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkRoomId, setBulkRoomId] = useState('');
+  const [allRooms, setAllRooms] = useState([]);
 
   const [form, setForm] = useState({
     candidate_name: '',
@@ -84,6 +87,23 @@ export default function AdminPage() {
     return () => clearInterval(interval);
   }, [filter]);
 
+  useEffect(() => {
+    // Load rooms for the filtered site (for bulk operations)
+    const loadAllRooms = async () => {
+      if (filter) {
+        try {
+          const roomsData = await roomsAPI.getAll(filter);
+          setAllRooms(roomsData);
+        } catch (err) {
+          console.error('Failed to load rooms:', err);
+        }
+      } else {
+        setAllRooms([]);
+      }
+    };
+    loadAllRooms();
+  }, [filter]);
+
   const addToQueue = async () => {
     if (!form.candidate_name.trim() || !form.site_id || !form.room_id || !form.step_id) {
       alert('Please fill all fields');
@@ -125,6 +145,34 @@ export default function AdminPage() {
       loadQueue();
     } catch (err) {
       console.error('Failed to remove:', err);
+    }
+  };
+
+  const handleBulkNextStep = async () => {
+    if (!bulkRoomId) {
+      alert('Please select a room');
+      return;
+    }
+
+    const count = filteredQueue.length;
+    if (count === 0) {
+      alert('No candidates in queue to move');
+      return;
+    }
+
+    if (!confirm(`Move all ${count} candidate(s) to the next step and change to selected room?`)) {
+      return;
+    }
+
+    try {
+      const result = await queueAPI.bulkNextStep(filter || null, bulkRoomId);
+      alert(result.message || `Successfully moved ${result.updated} candidate(s)`);
+      setShowBulkModal(false);
+      setBulkRoomId('');
+      loadQueue();
+    } catch (err) {
+      console.error('Failed to bulk move:', err);
+      alert('Failed to move candidates. Please try again.');
     }
   };
 
@@ -244,6 +292,16 @@ export default function AdminPage() {
               </span>
             </h2>
             <div className="flex items-center gap-3">
+              {filteredQueue.length > 0 && (
+                <button
+                  onClick={() => setShowBulkModal(true)}
+                  className="flex items-center gap-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 px-4 py-2 rounded-xl transition-all hover:scale-105 shadow-lg text-white font-medium"
+                  title="Move all to next step"
+                >
+                  <ArrowRight className="w-5 h-5" />
+                  Next Step
+                </button>
+              )}
               <button
                 onClick={loadQueue}
                 className="p-2.5 bg-vxi-black-50 hover:bg-vxi-black-400 border border-vxi-white-300/20 rounded-xl transition-all hover:scale-105"
@@ -330,6 +388,75 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
+
+      {/* Bulk Next Step Modal */}
+      {showBulkModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-vxi-black-100 rounded-2xl border-2 border-vxi-orange-500 shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-2xl font-bold text-vxi-white flex items-center gap-2">
+                <ArrowRight className="w-7 h-7 text-vxi-orange-500" />
+                Move to Next Step
+              </h3>
+              <button
+                onClick={() => setShowBulkModal(false)}
+                className="p-2 hover:bg-vxi-black-50 rounded-lg transition-all"
+              >
+                <X className="w-6 h-6 text-vxi-white-300" />
+              </button>
+            </div>
+
+            <p className="text-vxi-white-200 mb-6">
+              This will move all <span className="text-vxi-orange-500 font-bold">{filteredQueue.length}</span> candidate(s)
+              {filter && ` from ${sites.find(s => s.id.toString() === filter)?.name}`} to the next step in the recruitment process.
+            </p>
+
+            <div className="mb-6">
+              <label className="block text-sm text-vxi-white-300 mb-2 font-medium">
+                Select New Room
+              </label>
+              <select
+                value={bulkRoomId}
+                onChange={e => setBulkRoomId(e.target.value)}
+                className="w-full bg-vxi-black-50 border-2 border-vxi-orange-500/50 rounded-xl px-4 py-3 text-vxi-white focus:ring-2 focus:ring-vxi-orange-500 outline-none"
+              >
+                <option value="">Choose a room...</option>
+                {filter ? (
+                  allRooms.map(room => (
+                    <option key={room.id} value={room.id}>
+                      Room {room.room_number} - {room.description || 'Interview Room'}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>Please select a site filter first</option>
+                )}
+              </select>
+              {!filter && (
+                <p className="text-vxi-orange-400 text-sm mt-2">
+                  Please select a site from the filter dropdown above to see available rooms.
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleBulkNextStep}
+                disabled={!bulkRoomId}
+                className="flex-1 bg-vxi-orange-500 hover:bg-vxi-orange-600 disabled:bg-vxi-black-50 disabled:text-vxi-white-400 disabled:cursor-not-allowed px-6 py-3 rounded-xl font-bold transition-all hover:scale-105 shadow-lg text-white flex items-center justify-center gap-2"
+              >
+                <ArrowRight className="w-5 h-5" />
+                Confirm Move
+              </button>
+              <button
+                onClick={() => setShowBulkModal(false)}
+                className="px-6 py-3 bg-vxi-black-50 hover:bg-vxi-black-400 border border-vxi-white-300/20 rounded-xl transition-all text-vxi-white-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

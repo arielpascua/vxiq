@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Volume2, Plus, Trash2, Monitor, Settings, Users, MapPin,
-  CheckCircle, RefreshCw, Clock, ArrowRight, X
+  RefreshCw, Clock, ArrowRight, X
 } from 'lucide-react';
 import { sitesAPI, roomsAPI, stepsAPI, queueAPI, speak } from '../api';
 
@@ -138,15 +138,6 @@ export default function AdminPage() {
       loadQueue();
     } catch (err) {
       console.error('Failed to call candidate:', err);
-    }
-  };
-
-  const completeCandidate = async (id) => {
-    try {
-      await queueAPI.complete(id);
-      loadQueue();
-    } catch (err) {
-      console.error('Failed to complete:', err);
     }
   };
 
@@ -418,11 +409,11 @@ export default function AdminPage() {
                     )}
                     {item.status === 'called' && (
                       <button
-                        onClick={() => completeCandidate(item.id)}
-                        className="flex items-center gap-2 bg-vxi-white-100 hover:bg-vxi-white text-vxi-black-300 hover:text-vxi-black-400 px-5 py-2.5 rounded-xl transition-all font-semibold hover:scale-105 shadow-lg"
+                        onClick={() => callCandidate(item)}
+                        className="flex items-center gap-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 px-5 py-2.5 rounded-xl transition-all font-semibold hover:scale-105 shadow-lg text-white"
                       >
-                        <CheckCircle className="w-5 h-5" />
-                        Done
+                        <Volume2 className="w-5 h-5" />
+                        Call Again
                       </button>
                     )}
                     <button

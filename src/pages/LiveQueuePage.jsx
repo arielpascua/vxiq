@@ -5,19 +5,23 @@ import { sitesAPI, queueAPI } from '../api';
 
 export default function LiveQueuePage() {
   const [sites, setSites] = useState([]);
-  const [selectedSite, setSelectedSite] = useState('');
+  const [selectedSite, setSelectedSite] = useState(() => {
+    return localStorage.getItem('vxi-site-filter') || '';
+  });
   const [queue, setQueue] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [flashId, setFlashId] = useState(null);
   const [lastCalledIds, setLastCalledIds] = useState(new Set());
 
-  // Load sites
+  // Load sites and listen for filter changes from admin page
   useEffect(() => {
     const loadSites = async () => {
       try {
         const sitesData = await sitesAPI.getAll();
         setSites(sitesData);
-        if (sitesData.length > 0 && !selectedSite) {
+        // If no filter is set, default to first site
+        const storedFilter = localStorage.getItem('vxi-site-filter');
+        if (sitesData.length > 0 && !storedFilter) {
           setSelectedSite(sitesData[0].id.toString());
         }
       } catch (err) {
@@ -25,6 +29,25 @@ export default function LiveQueuePage() {
       }
     };
     loadSites();
+
+    // Listen for localStorage changes from admin page
+    const handleStorageChange = (e) => {
+      if (e.key === 'vxi-site-filter') {
+        setSelectedSite(e.newValue || '');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also poll localStorage for same-tab updates
+    const checkFilter = setInterval(() => {
+      const currentFilter = localStorage.getItem('vxi-site-filter') || '';
+      setSelectedSite(prev => prev !== currentFilter ? currentFilter : prev);
+    }, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(checkFilter);
+    };
   }, []);
 
   // Load queue
@@ -84,15 +107,11 @@ export default function LiveQueuePage() {
           </div>
 
           <div className="flex items-center gap-6">
-            <select
-              value={selectedSite}
-              onChange={e => setSelectedSite(e.target.value)}
-              className="bg-vxi-black-50 border-2 border-vxi-orange-500/50 rounded-2xl px-5 py-3 text-xl font-semibold focus:ring-4 focus:ring-vxi-orange-500/50 outline-none text-vxi-white hover:bg-vxi-black-400 transition-all"
-            >
-              {sites.map(site => (
-                <option key={site.id} value={site.id}>{site.name}</option>
-              ))}
-            </select>
+            <div className="bg-vxi-orange-500/20 border-2 border-vxi-orange-500 rounded-2xl px-6 py-3">
+              <p className="text-2xl font-bold text-vxi-orange-500">
+                {sites.find(s => s.id.toString() === selectedSite)?.name || 'All Sites'}
+              </p>
+            </div>
 
             <div className="text-right bg-vxi-black-50 px-6 py-3 rounded-2xl border border-vxi-orange-500/30">
               <p className="text-5xl font-mono font-bold text-vxi-orange-500">
@@ -197,7 +216,7 @@ export default function LiveQueuePage() {
             Please listen for your name announcement
           </p>
           <p className="font-bold text-vxi-orange-500 text-2xl">
-            {sites.find(s => s.id.toString() === selectedSite)?.name || ''} Site
+            {sites.find(s => s.id.toString() === selectedSite)?.name || 'All Sites'}
           </p>
         </div>
       </footer>

@@ -12,7 +12,9 @@ export default function AdminPage() {
   const [steps, setSteps] = useState([]);
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('');
+  const [filter, setFilter] = useState(() => {
+    return localStorage.getItem('vxi-site-filter') || '';
+  });
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [bulkRoomId, setBulkRoomId] = useState('');
   const [bulkStepId, setBulkStepId] = useState('');
@@ -89,6 +91,11 @@ export default function AdminPage() {
     return () => clearInterval(interval);
   }, [filter]);
 
+  // Save filter to localStorage for cross-page persistence
+  useEffect(() => {
+    localStorage.setItem('vxi-site-filter', filter);
+  }, [filter]);
+
   useEffect(() => {
     // Load rooms based on selected candidates' sites
     const loadRoomsForSelected = async () => {
@@ -131,7 +138,7 @@ export default function AdminPage() {
   };
 
   const callCandidate = async (item) => {
-    const announcement = `${item.candidate_name}, please proceed to Room ${item.room_number} for your ${item.step_name}.`;
+    const announcement = `${item.candidate_name}, please proceed to ${item.room_number} for your ${item.step_name}.`;
     speak(announcement);
     try {
       await queueAPI.call(item.id);
@@ -220,6 +227,16 @@ export default function AdminPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <select
+              value={filter}
+              onChange={e => setFilter(e.target.value)}
+              className="bg-vxi-black-50 border border-vxi-orange-500/50 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-vxi-orange-500 outline-none text-vxi-white font-medium"
+            >
+              <option value="">All Sites</option>
+              {sites.map(site => (
+                <option key={site.id} value={site.id}>{site.name}</option>
+              ))}
+            </select>
             <Link
               to="/settings"
               className="flex items-center gap-2 bg-vxi-black-50 hover:bg-vxi-black-400 border border-vxi-white-300/20 px-4 py-2.5 rounded-xl transition-all duration-200 hover:scale-105"
@@ -343,16 +360,6 @@ export default function AdminPage() {
               >
                 <RefreshCw className="w-5 h-5 text-vxi-white-200" />
               </button>
-              <select
-                value={filter}
-                onChange={e => setFilter(e.target.value)}
-                className="bg-vxi-black-50 border border-vxi-white-300/20 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-vxi-orange-500 outline-none text-vxi-white"
-              >
-                <option value="">All Sites</option>
-                {sites.map(site => (
-                  <option key={site.id} value={site.id}>{site.name}</option>
-                ))}
-              </select>
             </div>
           </div>
 

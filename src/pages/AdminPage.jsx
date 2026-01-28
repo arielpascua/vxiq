@@ -173,8 +173,7 @@ export default function AdminPage() {
     }
 
     try {
-      const result = await queueAPI.bulkMove(selectedCandidates, bulkStepId, bulkRoomId);
-      alert(result.message || `Successfully moved ${result.updated} candidate(s)`);
+      await queueAPI.bulkMove(selectedCandidates, bulkStepId, bulkRoomId);
       setShowBulkModal(false);
       setBulkRoomId('');
       setBulkStepId('');
@@ -413,7 +412,7 @@ export default function AdminPage() {
                         className="flex items-center gap-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 px-5 py-2.5 rounded-xl transition-all font-semibold hover:scale-105 shadow-lg text-white"
                       >
                         <Volume2 className="w-5 h-5" />
-                        Call Again
+                        Call Again {item.call_count > 0 && `(${item.call_count}x)`}
                       </button>
                     )}
                     <button

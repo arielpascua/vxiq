@@ -47,6 +47,7 @@ db.exec(`
     room_id INTEGER,
     step_id INTEGER,
     status TEXT DEFAULT 'waiting',
+    call_count INTEGER DEFAULT 0,
     called_at DATETIME,
     completed_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -55,6 +56,13 @@ db.exec(`
     FOREIGN KEY (step_id) REFERENCES steps(id)
   );
 `);
+
+// Migration: Add call_count column if it doesn't exist
+try {
+  db.prepare('ALTER TABLE queue ADD COLUMN call_count INTEGER DEFAULT 0').run();
+} catch (err) {
+  // Column already exists, ignore
+}
 
 // Seed default data if empty
 const siteCount = db.prepare('SELECT COUNT(*) as count FROM sites').get();
@@ -248,7 +256,7 @@ app.post('/api/queue', (req, res) => {
 });
 
 app.put('/api/queue/:id/call', (req, res) => {
-  db.prepare('UPDATE queue SET status = ?, called_at = CURRENT_TIMESTAMP WHERE id = ?')
+  db.prepare('UPDATE queue SET status = ?, call_count = call_count + 1, called_at = CURRENT_TIMESTAMP WHERE id = ?')
     .run('called', req.params.id);
   res.json({ success: true });
 });

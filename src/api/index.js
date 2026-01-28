@@ -55,9 +55,9 @@ export const queueAPI = {
   complete: (id) => fetchAPI(`/queue/${id}/complete`, { method: 'PUT' }),
   remove: (id) => fetchAPI(`/queue/${id}`, { method: 'DELETE' }),
   cleanup: () => fetchAPI('/queue/cleanup', { method: 'POST' }),
-  bulkMove: (candidateIds, stepId, roomId) => fetchAPI('/queue/bulk-move', {
+  bulkMove: (candidateIds, stepId, roomId, status) => fetchAPI('/queue/bulk-move', {
     method: 'POST',
-    body: JSON.stringify({ candidate_ids: candidateIds, step_id: stepId, room_id: roomId })
+    body: JSON.stringify({ candidate_ids: candidateIds, step_id: stepId, room_id: roomId, status: status || 'called' })
   }),
 };
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Volume2, Plus, Trash2, Monitor, Settings, Users, MapPin,
-  RefreshCw, Clock, ArrowRight, X, Menu
+  RefreshCw, Clock, ArrowRight, X, Menu, Search
 } from 'lucide-react';
 import { sitesAPI, roomsAPI, stepsAPI, queueAPI, speak } from '../api';
 
@@ -19,9 +19,11 @@ export default function AdminPage() {
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [bulkRoomId, setBulkRoomId] = useState('');
   const [bulkStepId, setBulkStepId] = useState('');
+  const [bulkStatus, setBulkStatus] = useState('called');
   const [allRooms, setAllRooms] = useState([]);
   const [selectedCandidates, setSelectedCandidates] = useState([]);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [form, setForm] = useState({
     candidate_name: '',
@@ -189,10 +191,10 @@ export default function AdminPage() {
     }
 
     try {
-      const result = await queueAPI.bulkMove(selectedCandidates, bulkStepId, bulkRoomId);
+      const result = await queueAPI.bulkMove(selectedCandidates, bulkStepId, bulkRoomId, bulkStatus);
 
-      // Announce all moved candidates together
-      if (result.candidates && result.candidates.length > 0) {
+      // Announce all moved candidates together (only if status is not 'waiting')
+      if (bulkStatus !== 'waiting' && result.candidates && result.candidates.length > 0) {
         const names = result.candidates.map(c => c.candidate_name).join(', ');
         const { room_number, step_name } = result.candidates[0];
         const announcement = `${names}, please proceed to ${room_number} for your ${step_name}.`;
@@ -202,6 +204,7 @@ export default function AdminPage() {
       setShowBulkModal(false);
       setBulkRoomId('');
       setBulkStepId('');
+      setBulkStatus('called');
       setSelectedCandidates([]);
       loadQueue();
     } catch (err) {
@@ -226,9 +229,9 @@ export default function AdminPage() {
     }
   };
 
-  const filteredQueue = filter
-    ? queue.filter(q => q.site_id === parseInt(filter))
-    : queue;
+  const filteredQueue = queue
+    .filter(q => !filter || q.site_id === parseInt(filter))
+    .filter(q => !searchQuery || q.candidate_name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <div className="min-h-screen bg-vxi-black-300 text-vxi-white">
@@ -393,9 +396,34 @@ export default function AdminPage() {
                 </span>
               </h2>
               <div className="flex items-center gap-2 flex-wrap">
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-vxi-white-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Search..."
+                    className="bg-vxi-black-50 border border-vxi-white-300/20 rounded-lg sm:rounded-xl pl-9 pr-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-vxi-orange-500 focus:border-vxi-orange-500 outline-none text-vxi-white placeholder-vxi-white-400 w-32 sm:w-40"
+                  />
+                </div>
                 {selectedCandidates.length > 0 && (
                   <button
-                    onClick={() => setShowBulkModal(true)}
+                    onClick={() => {
+                      // If 1 candidate selected, pre-fill with their current values
+                      if (selectedCandidates.length === 1) {
+                        const candidate = queue.find(q => q.id === selectedCandidates[0]);
+                        if (candidate) {
+                          setBulkStepId(candidate.step_id?.toString() || '');
+                          setBulkRoomId(candidate.room_id?.toString() || '');
+                          setBulkStatus(candidate.status || 'waiting');
+                        }
+                      } else {
+                        setBulkStepId('');
+                        setBulkRoomId('');
+                        setBulkStatus('called');
+                      }
+                      setShowBulkModal(true);
+                    }}
                     className="flex items-center gap-1.5 sm:gap-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl transition-all hover:scale-105 shadow-lg text-white font-medium text-xs sm:text-sm"
                     title="Move selected candidates"
                   >
@@ -558,7 +586,7 @@ export default function AdminPage() {
               </select>
             </div>
 
-            <div className="mb-4 sm:mb-6">
+            <div className="mb-4">
               <label className="block text-xs sm:text-sm text-vxi-white-300 mb-2 font-medium">
                 Select Target Room
               </label>
@@ -593,6 +621,26 @@ export default function AdminPage() {
               )}
             </div>
 
+            <div className="mb-4 sm:mb-6">
+              <label className="block text-xs sm:text-sm text-vxi-white-300 mb-2 font-medium">
+                Select Status
+              </label>
+              <select
+                value={bulkStatus}
+                onChange={e => setBulkStatus(e.target.value)}
+                className="w-full bg-vxi-black-50 border-2 border-vxi-orange-500/50 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-vxi-white focus:ring-2 focus:ring-vxi-orange-500 outline-none"
+              >
+                <option value="waiting">Waiting</option>
+                <option value="ongoing">Ongoing</option>
+                <option value="called">Called</option>
+              </select>
+              {bulkStatus === 'waiting' && (
+                <p className="text-vxi-white-400 text-xs sm:text-sm mt-2">
+                  TTS announcement will be skipped for waiting status.
+                </p>
+              )}
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
                 onClick={handleBulkMove}
@@ -607,6 +655,7 @@ export default function AdminPage() {
                   setShowBulkModal(false);
                   setBulkRoomId('');
                   setBulkStepId('');
+                  setBulkStatus('called');
                 }}
                 className="px-6 py-3 bg-vxi-black-50 hover:bg-vxi-black-400 border border-vxi-white-300/20 rounded-xl transition-all text-vxi-white-200 text-sm sm:text-base"
               >

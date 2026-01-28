@@ -269,7 +269,7 @@ app.put('/api/queue/:id/complete', (req, res) => {
 
 // Bulk move selected candidates to specific step and room
 app.post('/api/queue/bulk-move', (req, res) => {
-  const { candidate_ids, step_id, room_id } = req.body;
+  const { candidate_ids, step_id, room_id, status } = req.body;
 
   if (!candidate_ids || !Array.isArray(candidate_ids) || candidate_ids.length === 0) {
     return res.status(400).json({ error: 'Candidate IDs are required' });
@@ -283,13 +283,18 @@ app.post('/api/queue/bulk-move', (req, res) => {
     return res.status(400).json({ error: 'Room ID is required' });
   }
 
+  const targetStatus = status || 'called';
+
   try {
     let updated = 0;
-    const updateStmt = db.prepare('UPDATE queue SET step_id = ?, room_id = ?, status = ?, call_count = 1, called_at = CURRENT_TIMESTAMP WHERE id = ?');
+    // Only set call_count and called_at if status is 'called'
+    const updateStmt = targetStatus === 'called'
+      ? db.prepare('UPDATE queue SET step_id = ?, room_id = ?, status = ?, call_count = call_count + 1, called_at = CURRENT_TIMESTAMP WHERE id = ?')
+      : db.prepare('UPDATE queue SET step_id = ?, room_id = ?, status = ? WHERE id = ?');
 
     candidate_ids.forEach(id => {
       try {
-        updateStmt.run(step_id, room_id, 'called', id);
+        updateStmt.run(step_id, room_id, targetStatus, id);
         updated++;
       } catch (err) {
         console.error(`Failed to update candidate ${id}:`, err);

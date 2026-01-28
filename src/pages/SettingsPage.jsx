@@ -50,22 +50,168 @@ function CrudTable({ title, icon: Icon, items, columns, onAdd, onEdit, onDelete,
   };
 
   return (
-    <div className="bg-vxi-black-100 rounded-2xl border border-vxi-orange-500/30 overflow-hidden shadow-xl">
-      <div className="p-5 border-b border-vxi-orange-500/20 flex items-center justify-between bg-vxi-black-50">
-        <h2 className="text-xl font-bold flex items-center gap-2 text-vxi-white">
-          <Icon className="w-6 h-6 text-vxi-orange-500" />
+    <div className="bg-vxi-black-100 rounded-xl sm:rounded-2xl border border-vxi-orange-500/30 overflow-hidden shadow-xl">
+      <div className="p-4 sm:p-5 border-b border-vxi-orange-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-vxi-black-50">
+        <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-vxi-white">
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-vxi-orange-500" />
           {title}
         </h2>
         <button
           onClick={startAdd}
-          className="flex items-center gap-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:scale-105 shadow-lg text-white"
+          className="flex items-center gap-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all hover:scale-105 shadow-lg text-white w-full sm:w-auto justify-center"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
           Add New
         </button>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Mobile Card View */}
+      <div className="sm:hidden divide-y divide-vxi-white-300/10">
+        {/* Add Card */}
+        {isAdding && (
+          <div className="p-4 bg-vxi-orange-500/10 border-l-4 border-vxi-orange-500">
+            <div className="space-y-3">
+              {columns.filter(col => col.editable).map(col => (
+                <div key={col.field}>
+                  <label className="block text-xs text-vxi-white-300 mb-1">{col.header}</label>
+                  {col.type === 'select' ? (
+                    <select
+                      value={addForm[col.field] || ''}
+                      onChange={e => setAddForm(f => ({ ...f, [col.field]: e.target.value }))}
+                      className="w-full bg-vxi-black-50 border border-vxi-orange-500/50 rounded-lg px-3 py-2 text-sm text-vxi-white focus:ring-2 focus:ring-vxi-orange-500 outline-none"
+                    >
+                      <option value="">Select...</option>
+                      {col.options?.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  ) : col.type === 'number' ? (
+                    <input
+                      type="number"
+                      value={addForm[col.field] || ''}
+                      onChange={e => setAddForm(f => ({ ...f, [col.field]: parseInt(e.target.value) || 0 }))}
+                      className="w-full bg-vxi-black-50 border border-vxi-orange-500/50 rounded-lg px-3 py-2 text-sm text-vxi-white focus:ring-2 focus:ring-vxi-orange-500 outline-none"
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      value={addForm[col.field] || ''}
+                      onChange={e => setAddForm(f => ({ ...f, [col.field]: e.target.value }))}
+                      className="w-full bg-vxi-black-50 border border-vxi-orange-500/50 rounded-lg px-3 py-2 text-sm text-vxi-white placeholder-vxi-white-400 focus:ring-2 focus:ring-vxi-orange-500 outline-none"
+                      placeholder={col.placeholder || ''}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2 mt-4">
+              <button onClick={saveAdd} className="flex-1 py-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 rounded-lg text-white font-semibold text-sm flex items-center justify-center gap-2">
+                <Check className="w-4 h-4" /> Save
+              </button>
+              <button onClick={cancelAdd} className="flex-1 py-2 bg-vxi-black-50 border border-vxi-white-300/20 rounded-lg text-vxi-white-300 text-sm">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Data Cards */}
+        {items.map(item => (
+          <div key={item.id} className={`p-4 ${!item.is_active ? 'opacity-50' : ''}`}>
+            {editingId === item.id ? (
+              <div className="space-y-3">
+                {columns.filter(col => col.editable).map(col => (
+                  <div key={col.field}>
+                    <label className="block text-xs text-vxi-white-300 mb-1">{col.header}</label>
+                    {col.type === 'select' ? (
+                      <select
+                        value={editForm[col.field] || ''}
+                        onChange={e => setEditForm(f => ({ ...f, [col.field]: e.target.value }))}
+                        className="w-full bg-vxi-black-50 border border-vxi-orange-500/50 rounded-lg px-3 py-2 text-sm text-vxi-white focus:ring-2 focus:ring-vxi-orange-500 outline-none"
+                      >
+                        <option value="">Select...</option>
+                        {col.options?.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    ) : col.type === 'number' ? (
+                      <input
+                        type="number"
+                        value={editForm[col.field] || ''}
+                        onChange={e => setEditForm(f => ({ ...f, [col.field]: parseInt(e.target.value) || 0 }))}
+                        className="w-full bg-vxi-black-50 border border-vxi-orange-500/50 rounded-lg px-3 py-2 text-sm text-vxi-white focus:ring-2 focus:ring-vxi-orange-500 outline-none"
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value={editForm[col.field] || ''}
+                        onChange={e => setEditForm(f => ({ ...f, [col.field]: e.target.value }))}
+                        className="w-full bg-vxi-black-50 border border-vxi-orange-500/50 rounded-lg px-3 py-2 text-sm text-vxi-white focus:ring-2 focus:ring-vxi-orange-500 outline-none"
+                      />
+                    )}
+                  </div>
+                ))}
+                <div className="flex gap-2 mt-4">
+                  <button onClick={saveEdit} className="flex-1 py-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 rounded-lg text-white font-semibold text-sm flex items-center justify-center gap-2">
+                    <Save className="w-4 h-4" /> Save
+                  </button>
+                  <button onClick={cancelEdit} className="flex-1 py-2 bg-vxi-black-50 border border-vxi-white-300/20 rounded-lg text-vxi-white-300 text-sm">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    {columns.filter(col => col.field !== 'is_active' && col.field !== 'id').slice(0, 2).map(col => (
+                      <div key={col.field} className="mb-1">
+                        <span className="text-xs text-vxi-white-400">{col.header}: </span>
+                        <span className="text-vxi-white font-medium">
+                          {col.render ? col.render(item[col.field], item) : item[col.field] || '-'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-xs font-semibold ${item.is_active ? 'bg-vxi-orange-500/20 text-vxi-orange-400' : 'bg-red-900/30 text-red-400'}`}>
+                    {item.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => onToggle(item.id, !item.is_active)}
+                    className={`flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 ${item.is_active ? 'bg-vxi-black-50 border border-vxi-white-300/20 text-vxi-white-300' : 'bg-vxi-orange-500 text-white'}`}
+                  >
+                    {item.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {item.is_active ? 'Hide' : 'Show'}
+                  </button>
+                  <button
+                    onClick={() => startEdit(item)}
+                    className="flex-1 py-2 bg-vxi-orange-500/20 border border-vxi-orange-500/50 rounded-lg text-vxi-orange-400 text-sm font-medium flex items-center justify-center gap-1.5"
+                  >
+                    <Pencil className="w-4 h-4" /> Edit
+                  </button>
+                  <button
+                    onClick={() => onDelete(item.id)}
+                    className="py-2 px-3 bg-red-600/20 border border-red-500/50 rounded-lg text-red-400 text-sm"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+
+        {items.length === 0 && !isAdding && (
+          <div className="p-8 text-center text-vxi-white-400 text-sm">
+            No items found. Tap "Add New" to create one.
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden sm:block overflow-x-auto">
         <table className="w-full">
           <thead className="bg-vxi-black-50/50">
             <tr>
@@ -342,50 +488,50 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-vxi-black-300 text-vxi-white">
       {/* Header */}
-      <header className="bg-vxi-black-100 border-b border-vxi-orange-500/30 px-6 py-4 shadow-lg">
+      <header className="bg-vxi-black-100 border-b border-vxi-orange-500/30 px-4 sm:px-6 py-3 sm:py-4 shadow-lg">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link
               to="/admin"
-              className="p-2.5 bg-vxi-black-50 hover:bg-vxi-orange-500 border border-vxi-white-300/20 hover:border-vxi-orange-500 rounded-xl transition-all hover:scale-105"
+              className="p-2 sm:p-2.5 bg-vxi-black-50 hover:bg-vxi-orange-500 border border-vxi-white-300/20 hover:border-vxi-orange-500 rounded-lg sm:rounded-xl transition-all hover:scale-105"
             >
-              <ArrowLeft className="w-6 h-6 text-vxi-white-200 hover:text-white" />
+              <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-vxi-white-200 hover:text-white" />
             </Link>
-            <div className="flex items-center gap-3">
-              <div className="bg-vxi-orange-500 p-2.5 rounded-xl shadow-lg">
-                <Building className="w-7 h-7 text-white" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="bg-vxi-orange-500 p-2 sm:p-2.5 rounded-lg sm:rounded-xl shadow-lg">
+                <Building className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-vxi-white">System Settings</h1>
-                <p className="text-vxi-white-300 text-sm">VXI TA Queue Configuration</p>
+                <h1 className="text-lg sm:text-2xl font-bold text-vxi-white">Settings</h1>
+                <p className="text-vxi-white-300 text-xs sm:text-sm hidden sm:block">VXI TA Queue Configuration</p>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-3 sm:p-6 max-w-7xl mx-auto">
         {/* Tabs */}
-        <div className="flex gap-3 mb-6">
+        <div className="flex gap-2 sm:gap-3 mb-4 sm:mb-6 overflow-x-auto pb-2">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105 ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold transition-all hover:scale-105 whitespace-nowrap text-sm sm:text-base ${
                 activeTab === tab.id
                   ? 'bg-vxi-orange-500 text-white shadow-lg'
                   : 'bg-vxi-black-100 text-vxi-white-300 hover:bg-vxi-black-50 border border-vxi-white-300/20'
               }`}
             >
-              <tab.icon className="w-5 h-5" />
+              <tab.icon className="w-4 h-4 sm:w-5 sm:h-5" />
               {tab.label}
             </button>
           ))}
         </div>
 
         {loading ? (
-          <div className="bg-vxi-black-100 rounded-2xl p-16 text-center text-vxi-white-400 border border-vxi-orange-500/30">
-            <div className="animate-spin w-12 h-12 border-4 border-vxi-orange-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <div className="bg-vxi-black-100 rounded-xl sm:rounded-2xl p-12 sm:p-16 text-center text-vxi-white-400 border border-vxi-orange-500/30">
+            <div className="animate-spin w-10 h-10 sm:w-12 sm:h-12 border-4 border-vxi-orange-500 border-t-transparent rounded-full mx-auto mb-4"></div>
             Loading...
           </div>
         ) : (
@@ -484,14 +630,14 @@ export default function SettingsPage() {
         )}
 
         {/* Help Text */}
-        <div className="mt-6 bg-vxi-black-100 rounded-2xl p-6 border border-vxi-orange-500/30 shadow-xl">
-          <h3 className="font-bold text-vxi-orange-500 mb-3 text-lg flex items-center gap-2">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="mt-4 sm:mt-6 bg-vxi-black-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-vxi-orange-500/30 shadow-xl">
+          <h3 className="font-bold text-vxi-orange-500 mb-3 text-base sm:text-lg flex items-center gap-2">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             Configuration Tips
           </h3>
-          <ul className="text-sm text-vxi-white-200 space-y-2">
+          <ul className="text-xs sm:text-sm text-vxi-white-200 space-y-2">
             <li className="flex items-start gap-2">
               <span className="text-vxi-orange-500 font-bold">•</span>
               <span><strong className="text-vxi-orange-400">Sites:</strong> Add your VXI locations (Clark, Makati, Cebu, etc.)</span>
@@ -502,7 +648,7 @@ export default function SettingsPage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-vxi-orange-500 font-bold">•</span>
-              <span><strong className="text-vxi-orange-400">Steps:</strong> Define your recruitment process stages in order (Initial Interview → Final Interview → Job Offer)</span>
+              <span><strong className="text-vxi-orange-400">Steps:</strong> Define your recruitment process stages in order</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-vxi-orange-500 font-bold">•</span>

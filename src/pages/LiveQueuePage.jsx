@@ -167,10 +167,10 @@ export default function LiveQueuePage() {
   // Dynamic sizing based on cards per page
   const cardSize = itemsPerPage <= 4 ? 'xl' : itemsPerPage <= 8 ? 'lg' : itemsPerPage <= 16 ? 'md' : 'sm';
   const sizeMap = {
-    xl:  { dot: 'w-4 h-4', num: 'text-2xl', name: 'text-3xl', meta: 'text-lg', metaPad: 'px-3 py-1.5', pad: 'p-5', gap: 'gap-3', dotMb: 'mb-2', metaMt: 'mt-2' },
-    lg:  { dot: 'w-3 h-3', num: 'text-base', name: 'text-xl', meta: 'text-sm', metaPad: 'px-2 py-1', pad: 'p-3', gap: 'gap-2', dotMb: 'mb-1', metaMt: 'mt-1' },
-    md:  { dot: 'w-2.5 h-2.5', num: 'text-sm', name: 'text-base', meta: 'text-xs', metaPad: 'px-1.5 py-0.5', pad: 'p-2', gap: 'gap-1.5', dotMb: 'mb-0.5', metaMt: 'mt-0.5' },
-    sm:  { dot: 'w-2 h-2', num: 'text-xs', name: 'text-sm', meta: 'text-[10px]', metaPad: 'px-1 py-0.5', pad: 'p-1.5', gap: 'gap-1', dotMb: 'mb-0', metaMt: 'mt-0.5' },
+    xl:  { dot: 'w-5 h-5', num: 'text-3xl', name: 'text-5xl', meta: 'text-2xl', metaPad: 'px-4 py-2', pad: 'p-6', gap: 'gap-4', round: 'rounded-lg' },
+    lg:  { dot: 'w-4 h-4', num: 'text-xl', name: 'text-3xl', meta: 'text-lg', metaPad: 'px-3 py-1.5', pad: 'p-4', gap: 'gap-3', round: 'rounded-lg' },
+    md:  { dot: 'w-3 h-3', num: 'text-base', name: 'text-xl', meta: 'text-sm', metaPad: 'px-2 py-1', pad: 'p-3', gap: 'gap-2', round: 'rounded-md' },
+    sm:  { dot: 'w-2 h-2', num: 'text-sm', name: 'text-base', meta: 'text-xs', metaPad: 'px-1.5 py-0.5', pad: 'p-2', gap: 'gap-1.5', round: 'rounded-md' },
   };
   const sz = sizeMap[cardSize];
 
@@ -365,12 +365,11 @@ export default function LiveQueuePage() {
               {paginatedApplicants.map((item, index) => (
                 <div
                   key={item.id}
-                  className={`bg-gradient-to-br from-vxi-black-100/80 to-vxi-black-200/60 backdrop-blur-sm border-l-4 ${
+                  className={`flex flex-col justify-between bg-gradient-to-br from-vxi-black-100/80 to-vxi-black-200/60 backdrop-blur-sm border-l-4 ${
                     item.status === 'ongoing' ? 'border-l-green-500' : 'border-l-red-500'
-                  } border-t border-r border-b border-t-vxi-white-300/10 border-r-vxi-white-300/10 border-b-vxi-white-300/10 rounded-xl ${sz.pad} hover:bg-vxi-black-50 hover:border-t-vxi-orange-500/30 hover:border-r-vxi-orange-500/30 hover:border-b-vxi-orange-500/30 transition-all`}
+                  } border-t border-r border-b border-t-vxi-white-300/10 border-r-vxi-white-300/10 border-b-vxi-white-300/10 ${sz.round} ${sz.pad} hover:bg-vxi-black-50 hover:border-t-vxi-orange-500/30 hover:border-r-vxi-orange-500/30 hover:border-b-vxi-orange-500/30 transition-all`}
                 >
-                  <div className={`flex items-center ${sz.gap} ${sz.dotMb}`}>
-                    {/* Status dot: red for waiting, green for ongoing */}
+                  <div className={`flex items-center ${sz.gap}`}>
                     <div className={`${sz.dot} rounded-full flex-shrink-0 ${
                       item.status === 'ongoing'
                         ? 'bg-green-500 shadow-md shadow-green-500/50'
@@ -383,8 +382,8 @@ export default function LiveQueuePage() {
                   <p className={`${sz.name} font-bold truncate text-vxi-white leading-tight`} title={item.candidate_name}>
                     {item.candidate_name}
                   </p>
-                  <div className={`flex items-center ${sz.gap} ${sz.metaMt}`}>
-                    <span className={`${sz.meta} text-vxi-white-400 bg-vxi-black-50 ${sz.metaPad} rounded-lg font-medium`}>
+                  <div className={`flex items-center ${sz.gap}`}>
+                    <span className={`${sz.meta} text-vxi-white-400 bg-vxi-black-50 ${sz.metaPad} ${sz.round} font-medium`}>
                       {item.room_number}
                     </span>
                     <span className={`${sz.meta} text-vxi-orange-400 truncate font-medium`} title={item.step_name}>

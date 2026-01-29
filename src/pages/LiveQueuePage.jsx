@@ -292,7 +292,7 @@ export default function LiveQueuePage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-5">
                       <div className="bg-gradient-to-br from-vxi-orange-500 to-vxi-orange-700 text-white font-bold text-sm min-w-16 px-3 py-2 rounded-xl flex items-center justify-center shadow-xl border-2 border-white/20 text-center leading-tight">
-                        {item.room_number}
+                        {item.room_number?.replace(/\s*room\s*/gi, ' ').trim()}
                       </div>
                       <div>
                         <p className="text-3xl font-black text-vxi-white tracking-tight">{item.candidate_name}</p>
@@ -387,7 +387,7 @@ export default function LiveQueuePage() {
                   </p>
                   <div className={`flex flex-col ${sz.gap}`}>
                     <span className={`${sz.meta} text-vxi-white-400 font-medium`}>
-                      {item.room_number}
+                      {item.room_number?.replace(/\s*room\s*/gi, ' ').trim()}
                     </span>
                     <span className={`${sz.meta} text-vxi-orange-400 font-medium`}>
                       {item.step_name}

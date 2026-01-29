@@ -124,7 +124,7 @@ export default function LiveQueuePage() {
 
     const carouselInterval = setInterval(() => {
       setCurrentPage(prev => (prev + 1) % totalPages);
-    }, 8000); // Change page every 8 seconds
+    }, 12000); // Change page every 12 seconds
 
     return () => clearInterval(carouselInterval);
   }, [queue, itemsPerPage]);

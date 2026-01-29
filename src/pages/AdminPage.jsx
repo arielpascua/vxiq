@@ -391,7 +391,7 @@ export default function AdminPage() {
               >
                 <option value="">Select Room</option>
                 {rooms.map(room => (
-                  <option key={room.id} value={room.id}>Room {room.room_number}</option>
+                  <option key={room.id} value={room.id}>{room.room_number}</option>
                 ))}
               </select>
             </div>
@@ -573,7 +573,7 @@ export default function AdminPage() {
                             {item.site_name}
                           </span>
                           <span className="bg-vxi-black-50 px-2 sm:px-3 py-0.5 sm:py-1 rounded-lg border border-vxi-white-300/20 text-xs">
-                            Room {item.room_number}
+                            {item.room_number}
                           </span>
                           <span className="text-vxi-orange-400 font-medium truncate">{item.step_name}</span>
                           <span className="flex items-center gap-1 font-mono text-xs bg-vxi-black-50 px-2 py-0.5 rounded-lg border border-vxi-white-300/20" title="Overall time">
@@ -675,7 +675,7 @@ export default function AdminPage() {
                 {allRooms.length > 0 ? (
                   allRooms.map(room => (
                     <option key={room.id} value={room.id}>
-                      Room {room.room_number} - {room.description || 'Interview Room'}
+                      {room.room_number} - {room.description || 'Interview Room'}
                     </option>
                   ))
                 ) : (

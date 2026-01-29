@@ -288,7 +288,7 @@ export default function LiveQueuePage() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-5">
-                      <div className="bg-gradient-to-br from-vxi-orange-500 to-vxi-orange-700 text-white font-black text-3xl w-16 h-16 rounded-xl flex items-center justify-center shadow-xl border-2 border-white/20">
+                      <div className="bg-gradient-to-br from-vxi-orange-500 to-vxi-orange-700 text-white font-bold text-sm min-w-16 px-3 py-2 rounded-xl flex items-center justify-center shadow-xl border-2 border-white/20 text-center leading-tight">
                         {item.room_number}
                       </div>
                       <div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Volume2, Plus, Trash2, Monitor, Settings, Users, MapPin,
-  RefreshCw, Clock, ArrowRight, X, Menu, Search
+  RefreshCw, Clock, ArrowRight, X, Menu, Search, Timer
 } from 'lucide-react';
 import { sitesAPI, roomsAPI, stepsAPI, queueAPI, speak } from '../api';
 
@@ -24,6 +24,7 @@ export default function AdminPage() {
   const [selectedCandidates, setSelectedCandidates] = useState([]);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [now, setNow] = useState(Date.now());
 
   const [form, setForm] = useState({
     candidate_name: '',
@@ -98,6 +99,23 @@ export default function AdminPage() {
     const interval = setInterval(loadQueue, 3000); // Poll every 3 seconds
     return () => clearInterval(interval);
   }, [filter]);
+
+  // Tick every second for elapsed timers
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const getElapsedTime = (createdAt) => {
+    if (!createdAt) return '--:--';
+    const elapsed = Math.floor((now - new Date(createdAt + 'Z').getTime()) / 1000);
+    if (elapsed < 0) return '00:00';
+    const hrs = Math.floor(elapsed / 3600);
+    const mins = Math.floor((elapsed % 3600) / 60);
+    const secs = elapsed % 60;
+    const pad = (n) => n.toString().padStart(2, '0');
+    return hrs > 0 ? `${pad(hrs)}:${pad(mins)}:${pad(secs)}` : `${pad(mins)}:${pad(secs)}`;
+  };
 
   // Save filter to localStorage for cross-page persistence and sync with form
   useEffect(() => {
@@ -508,6 +526,10 @@ export default function AdminPage() {
                             Room {item.room_number}
                           </span>
                           <span className="text-vxi-orange-400 font-medium truncate">{item.step_name}</span>
+                          <span className="flex items-center gap-1 font-mono text-xs bg-vxi-black-50 px-2 py-0.5 rounded-lg border border-vxi-white-300/20">
+                            <Timer className="w-3 h-3 text-vxi-orange-500" />
+                            {getElapsedTime(item.created_at)}
+                          </span>
                         </div>
                       </div>
                     </div>

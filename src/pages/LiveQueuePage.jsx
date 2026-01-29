@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Settings, Bell, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Users, Settings, Bell, ChevronRight, ChevronLeft, LayoutGrid } from 'lucide-react';
 import { sitesAPI, queueAPI } from '../api';
 
 export default function LiveQueuePage() {
@@ -12,7 +12,11 @@ export default function LiveQueuePage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [flashId, setFlashId] = useState(null);
   const [currentPage, setCurrentPage] = useState(0);
-  const [itemsPerPage] = useState(16); // Optimized for 32-40" TV at 15ft viewing distance
+  const [itemsPerPage, setItemsPerPage] = useState(() => {
+    const saved = localStorage.getItem('vxi-items-per-page');
+    return saved ? parseInt(saved) : 8;
+  });
+  const [showSettings, setShowSettings] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [isConnected, setIsConnected] = useState(true);
 
@@ -197,6 +201,50 @@ export default function LiveQueuePage() {
               <p className="text-vxi-white-300 text-sm font-medium">
                 {currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
               </p>
+            </div>
+
+            {/* Display settings */}
+            <div className="relative">
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className={`p-3 rounded-xl border transition-all hover:scale-110 shadow-lg ${showSettings ? 'bg-vxi-orange-500 border-vxi-orange-500' : 'bg-vxi-black-50 border-vxi-white-300/20 hover:bg-vxi-orange-500 hover:border-vxi-orange-500'}`}
+                title="Display Settings"
+              >
+                <LayoutGrid className="w-6 h-6 text-vxi-white-200 hover:text-white" />
+              </button>
+              {showSettings && (
+                <div className="absolute right-0 top-full mt-2 bg-vxi-black-100 border-2 border-vxi-orange-500 rounded-xl p-4 shadow-2xl z-50 w-64">
+                  <p className="text-sm text-vxi-white-300 font-medium mb-3">Cards per page</p>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => {
+                        const val = Math.max(4, itemsPerPage - 4);
+                        setItemsPerPage(val);
+                        localStorage.setItem('vxi-items-per-page', val.toString());
+                        setCurrentPage(0);
+                      }}
+                      disabled={itemsPerPage <= 4}
+                      className="w-10 h-10 flex items-center justify-center bg-vxi-black-50 border border-vxi-white-300/20 rounded-lg text-xl font-bold text-vxi-white hover:bg-vxi-orange-500 disabled:opacity-30 disabled:hover:bg-vxi-black-50 transition-all"
+                    >
+                      −
+                    </button>
+                    <span className="text-2xl font-bold text-vxi-orange-500 w-12 text-center">{itemsPerPage}</span>
+                    <button
+                      onClick={() => {
+                        const val = Math.min(32, itemsPerPage + 4);
+                        setItemsPerPage(val);
+                        localStorage.setItem('vxi-items-per-page', val.toString());
+                        setCurrentPage(0);
+                      }}
+                      disabled={itemsPerPage >= 32}
+                      className="w-10 h-10 flex items-center justify-center bg-vxi-black-50 border border-vxi-white-300/20 rounded-lg text-xl font-bold text-vxi-white hover:bg-vxi-orange-500 disabled:opacity-30 disabled:hover:bg-vxi-black-50 transition-all"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <p className="text-xs text-vxi-white-400 mt-2">Range: 4 – 32 (increments of 4)</p>
+                </div>
+              )}
             </div>
 
             <Link

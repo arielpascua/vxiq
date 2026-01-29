@@ -64,6 +64,13 @@ try {
   // Column already exists, ignore
 }
 
+// Migration: Add status_changed_at column if it doesn't exist
+try {
+  db.prepare('ALTER TABLE queue ADD COLUMN status_changed_at DATETIME DEFAULT CURRENT_TIMESTAMP').run();
+} catch (err) {
+  // Column already exists, ignore
+}
+
 // Seed default data if empty
 const siteCount = db.prepare('SELECT COUNT(*) as count FROM sites').get();
 if (siteCount.count === 0) {
@@ -256,13 +263,13 @@ app.post('/api/queue', (req, res) => {
 });
 
 app.put('/api/queue/:id/call', (req, res) => {
-  db.prepare('UPDATE queue SET status = ?, call_count = call_count + 1, called_at = CURRENT_TIMESTAMP WHERE id = ?')
+  db.prepare('UPDATE queue SET status = ?, call_count = call_count + 1, called_at = CURRENT_TIMESTAMP, status_changed_at = CURRENT_TIMESTAMP WHERE id = ?')
     .run('called', req.params.id);
   res.json({ success: true });
 });
 
 app.put('/api/queue/:id/complete', (req, res) => {
-  db.prepare('UPDATE queue SET status = ?, completed_at = CURRENT_TIMESTAMP WHERE id = ?')
+  db.prepare('UPDATE queue SET status = ?, completed_at = CURRENT_TIMESTAMP, status_changed_at = CURRENT_TIMESTAMP WHERE id = ?')
     .run('completed', req.params.id);
   res.json({ success: true });
 });
@@ -289,8 +296,8 @@ app.post('/api/queue/bulk-move', (req, res) => {
     let updated = 0;
     // Only set call_count and called_at if status is 'called'
     const updateStmt = targetStatus === 'called'
-      ? db.prepare('UPDATE queue SET step_id = ?, room_id = ?, status = ?, call_count = call_count + 1, called_at = CURRENT_TIMESTAMP WHERE id = ?')
-      : db.prepare('UPDATE queue SET step_id = ?, room_id = ?, status = ? WHERE id = ?');
+      ? db.prepare('UPDATE queue SET step_id = ?, room_id = ?, status = ?, call_count = call_count + 1, called_at = CURRENT_TIMESTAMP, status_changed_at = CURRENT_TIMESTAMP WHERE id = ?')
+      : db.prepare('UPDATE queue SET step_id = ?, room_id = ?, status = ?, status_changed_at = CURRENT_TIMESTAMP WHERE id = ?');
 
     candidate_ids.forEach(id => {
       try {
@@ -320,6 +327,13 @@ app.post('/api/queue/bulk-move', (req, res) => {
     console.error('Bulk move error:', err);
     res.status(500).json({ error: 'Failed to move candidates' });
   }
+});
+
+app.put('/api/queue/:id/name', (req, res) => {
+  const { candidate_name } = req.body;
+  if (!candidate_name) return res.status(400).json({ error: 'Name is required' });
+  db.prepare('UPDATE queue SET candidate_name = ? WHERE id = ?').run(candidate_name, req.params.id);
+  res.json({ success: true });
 });
 
 app.delete('/api/queue/:id', (req, res) => {

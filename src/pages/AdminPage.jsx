@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Volume2, Plus, Trash2, Monitor, Settings, Users, MapPin,
-  RefreshCw, Clock, ArrowRight, X, Menu, Search, Timer, CheckCircle, AlertCircle, Info
+  RefreshCw, Clock, ArrowRight, X, Menu, Search, Timer, CheckCircle, AlertCircle, Info, Pencil, Check
 } from 'lucide-react';
 import { sitesAPI, roomsAPI, stepsAPI, queueAPI, speak } from '../api';
 
@@ -27,6 +27,7 @@ export default function AdminPage() {
   const [now, setNow] = useState(Date.now());
   const [toast, setToast] = useState(null); // { message, type: 'success'|'error'|'info' }
   const [showConfirm, setShowConfirm] = useState(null); // { message, onConfirm }
+  const [editingName, setEditingName] = useState(null); // { id, name }
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -183,6 +184,18 @@ export default function AdminPage() {
       loadQueue();
     } catch (err) {
       console.error('Failed to call candidate:', err);
+    }
+  };
+
+  const saveEditName = async () => {
+    if (!editingName || !editingName.name.trim()) return;
+    try {
+      await queueAPI.updateName(editingName.id, editingName.name.trim());
+      showToast('Name updated');
+      setEditingName(null);
+      loadQueue();
+    } catch (err) {
+      showToast('Failed to update name', 'error');
     }
   };
 
@@ -526,7 +539,24 @@ export default function AdminPage() {
                       }`} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="font-bold text-base sm:text-xl text-vxi-white truncate">{item.candidate_name}</p>
+                          {editingName?.id === item.id ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                autoFocus
+                                value={editingName.name}
+                                onChange={e => setEditingName({ ...editingName, name: e.target.value })}
+                                onKeyDown={e => { if (e.key === 'Enter') saveEditName(); if (e.key === 'Escape') setEditingName(null); }}
+                                className="bg-vxi-black-50 border border-vxi-orange-500 rounded px-2 py-0.5 text-base sm:text-xl text-vxi-white font-bold focus:outline-none focus:ring-1 focus:ring-vxi-orange-500 w-48"
+                              />
+                              <button onClick={saveEditName} className="text-green-400 hover:text-green-300 p-1"><Check className="w-4 h-4" /></button>
+                              <button onClick={() => setEditingName(null)} className="text-vxi-white-400 hover:text-red-400 p-1"><X className="w-4 h-4" /></button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1 group">
+                              <p className="font-bold text-base sm:text-xl text-vxi-white truncate">{item.candidate_name}</p>
+                              <button onClick={() => setEditingName({ id: item.id, name: item.candidate_name })} className="opacity-0 group-hover:opacity-100 text-vxi-white-400 hover:text-vxi-orange-500 p-1 transition-opacity"><Pencil className="w-3.5 h-3.5" /></button>
+                            </div>
+                          )}
                           <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
                             item.status === 'called'
                               ? 'bg-green-500/20 text-green-400 border border-green-500/50'

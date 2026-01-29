@@ -213,7 +213,7 @@ export default function LiveQueuePage() {
                 <LayoutGrid className="w-6 h-6 text-vxi-white-200 hover:text-white" />
               </button>
               {showSettings && (
-                <div className="absolute right-0 top-full mt-2 bg-vxi-black-100 border-2 border-vxi-orange-500 rounded-xl p-4 shadow-2xl z-50 w-64">
+                <div className="absolute right-0 top-full mt-2 bg-vxi-black-100 border-2 border-vxi-orange-500 rounded-xl p-4 shadow-2xl z-50 w-64 animate-slide-down">
                   <p className="text-sm text-vxi-white-300 font-medium mb-3">Cards per page</p>
                   <div className="flex items-center gap-3">
                     <button
@@ -272,8 +272,8 @@ export default function LiveQueuePage() {
                 <div
                   key={item.id}
                   style={{ opacity: getCalledItemOpacity(item.id), transition: 'opacity 0.5s ease-out' }}
-                  className={`bg-gradient-to-r from-vxi-orange-500/20 to-vxi-orange-600/5 border-3 border-vxi-orange-500 rounded-2xl p-4 shadow-xl ${
-                    flashId === item.id ? 'animate-pulse ring-4 ring-vxi-orange-400/50 scale-[1.02]' : ''
+                  className={`bg-gradient-to-r from-vxi-orange-500/20 to-vxi-orange-600/5 border-3 border-vxi-orange-500 rounded-2xl p-4 shadow-xl animate-calling-glow ${
+                    flashId === item.id ? 'ring-4 ring-vxi-orange-400/50 scale-[1.02]' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -348,12 +348,15 @@ export default function LiveQueuePage() {
           ) : (
             <div
               ref={applicantGridRef}
-              className="flex-1 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-min content-start overflow-hidden"
+              className="flex-1 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-min content-start overflow-hidden carousel-page"
+              key={currentPage}
             >
               {paginatedApplicants.map((item, index) => (
                 <div
                   key={item.id}
-                  className="bg-vxi-black-100/80 backdrop-blur-sm border-2 border-vxi-white-300/20 rounded-xl p-3 hover:bg-vxi-black-50 hover:border-vxi-orange-500/50 transition-all"
+                  className={`bg-gradient-to-br from-vxi-black-100/80 to-vxi-black-200/60 backdrop-blur-sm border-l-4 ${
+                    item.status === 'ongoing' ? 'border-l-green-500' : 'border-l-red-500'
+                  } border-t border-r border-b border-t-vxi-white-300/10 border-r-vxi-white-300/10 border-b-vxi-white-300/10 rounded-xl p-3 hover:bg-vxi-black-50 hover:border-t-vxi-orange-500/30 hover:border-r-vxi-orange-500/30 hover:border-b-vxi-orange-500/30 transition-all`}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     {/* Status dot: red for waiting, green for ongoing */}
@@ -385,7 +388,7 @@ export default function LiveQueuePage() {
       </div>
 
       {/* Footer - Larger text for TV visibility */}
-      <footer className="flex-shrink-0 bg-vxi-black-100/90 backdrop-blur-md border-t-2 border-vxi-orange-500/30 px-6 py-3">
+      <footer className="flex-shrink-0 bg-vxi-black-100/90 backdrop-blur-md px-6 py-3" style={{ borderTop: '2px solid transparent', borderImage: 'linear-gradient(90deg, transparent, #FF6B35, transparent) 1' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
             <p className="text-lg text-vxi-white-200 flex items-center gap-2 font-medium">

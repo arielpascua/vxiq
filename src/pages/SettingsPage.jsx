@@ -50,15 +50,15 @@ function CrudTable({ title, icon: Icon, items, columns, onAdd, onEdit, onDelete,
   };
 
   return (
-    <div className="bg-vxi-black-100 rounded-xl sm:rounded-2xl border border-vxi-orange-500/30 overflow-hidden shadow-xl">
-      <div className="p-4 sm:p-5 border-b border-vxi-orange-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-vxi-black-50">
+    <div className="glass-card rounded-xl sm:rounded-2xl border border-vxi-orange-500/30 overflow-hidden shadow-xl">
+      <div className="p-4 sm:p-5 border-b border-vxi-orange-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-gradient-to-r from-vxi-black-50 to-vxi-black-100">
         <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-vxi-white">
           <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-vxi-orange-500" />
           {title}
         </h2>
         <button
           onClick={startAdd}
-          className="flex items-center gap-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all hover:scale-105 shadow-lg text-white w-full sm:w-auto justify-center"
+          className="flex items-center gap-2 bg-gradient-to-r from-vxi-orange-500 to-vxi-orange-600 hover:from-vxi-orange-600 hover:to-vxi-orange-700 px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all hover:scale-[1.02] active:scale-95 shadow-lg text-white w-full sm:w-auto justify-center"
         >
           <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
           Add New
@@ -266,7 +266,7 @@ function CrudTable({ title, icon: Icon, items, columns, onAdd, onEdit, onDelete,
                   <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={saveAdd}
-                      className="p-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 rounded-lg transition-all hover:scale-110 shadow-lg"
+                      className="p-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 rounded-lg transition-all hover:scale-[1.02] shadow-lg"
                     >
                       <Check className="w-5 h-5 text-white" />
                     </button>
@@ -283,7 +283,7 @@ function CrudTable({ title, icon: Icon, items, columns, onAdd, onEdit, onDelete,
 
             {/* Data Rows */}
             {items.map(item => (
-              <tr key={item.id} className={`hover:bg-vxi-black-50 transition-colors ${!item.is_active ? 'opacity-50' : ''}`}>
+              <tr key={item.id} className={`zebra-row hover:bg-vxi-orange-500/5 transition-colors ${!item.is_active ? 'opacity-50' : ''}`}>
                 {columns.map(col => (
                   <td key={col.field} className="px-5 py-4">
                     {editingId === item.id && col.editable ? (
@@ -326,7 +326,7 @@ function CrudTable({ title, icon: Icon, items, columns, onAdd, onEdit, onDelete,
                       <>
                         <button
                           onClick={saveEdit}
-                          className="p-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 rounded-lg transition-all hover:scale-110 shadow-lg"
+                          className="p-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 rounded-lg transition-all hover:scale-[1.02] shadow-lg"
                         >
                           <Save className="w-5 h-5 text-white" />
                         </button>
@@ -341,20 +341,20 @@ function CrudTable({ title, icon: Icon, items, columns, onAdd, onEdit, onDelete,
                       <>
                         <button
                           onClick={() => onToggle(item.id, !item.is_active)}
-                          className={`p-2 rounded-lg transition-all hover:scale-110 ${item.is_active ? 'bg-vxi-black-50 hover:bg-vxi-black-400 border border-vxi-white-300/20' : 'bg-vxi-orange-500 hover:bg-vxi-orange-600 shadow-lg'}`}
+                          className={`p-2 rounded-lg transition-all hover:scale-[1.02] ${item.is_active ? 'bg-vxi-black-50 hover:bg-vxi-black-400 border border-vxi-white-300/20' : 'bg-vxi-orange-500 hover:bg-vxi-orange-600 shadow-lg'}`}
                           title={item.is_active ? 'Deactivate' : 'Activate'}
                         >
                           {item.is_active ? <EyeOff className="w-5 h-5 text-vxi-white-300" /> : <Eye className="w-5 h-5 text-white" />}
                         </button>
                         <button
                           onClick={() => startEdit(item)}
-                          className="p-2 bg-vxi-orange-500/20 hover:bg-vxi-orange-500 border border-vxi-orange-500/50 rounded-lg transition-all hover:scale-110"
+                          className="p-2 bg-vxi-orange-500/20 hover:bg-vxi-orange-500 border border-vxi-orange-500/50 rounded-lg transition-all hover:scale-[1.02]"
                         >
                           <Pencil className="w-5 h-5 text-vxi-orange-400 hover:text-white" />
                         </button>
                         <button
                           onClick={() => onDelete(item.id)}
-                          className="p-2 bg-red-600/20 hover:bg-red-600 border border-red-500/50 rounded-lg transition-all hover:scale-110"
+                          className="p-2 bg-red-600/20 hover:bg-red-600 border border-red-500/50 rounded-lg transition-all hover:scale-[1.02]"
                         >
                           <Trash2 className="w-5 h-5 text-red-400 hover:text-white" />
                         </button>
@@ -493,7 +493,7 @@ export default function SettingsPage() {
           <div className="flex items-center gap-2 sm:gap-4">
             <Link
               to="/admin"
-              className="p-2 sm:p-2.5 bg-vxi-black-50 hover:bg-vxi-orange-500 border border-vxi-white-300/20 hover:border-vxi-orange-500 rounded-lg sm:rounded-xl transition-all hover:scale-105"
+              className="p-2 sm:p-2.5 bg-vxi-black-50 hover:bg-vxi-orange-500 border border-vxi-white-300/20 hover:border-vxi-orange-500 rounded-lg sm:rounded-xl transition-all hover:scale-[1.02] active:scale-95"
             >
               <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-vxi-white-200 hover:text-white" />
             </Link>
@@ -517,10 +517,10 @@ export default function SettingsPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold transition-all hover:scale-105 whitespace-nowrap text-sm sm:text-base ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-95 whitespace-nowrap text-sm sm:text-base ${
                 activeTab === tab.id
-                  ? 'bg-vxi-orange-500 text-white shadow-lg'
-                  : 'bg-vxi-black-100 text-vxi-white-300 hover:bg-vxi-black-50 border border-vxi-white-300/20'
+                  ? 'bg-gradient-to-r from-vxi-orange-500 to-vxi-orange-600 text-white shadow-lg shadow-vxi-orange-500/25'
+                  : 'bg-vxi-black-100 text-vxi-white-300 hover:bg-vxi-black-50 border border-vxi-white-300/20 hover:border-vxi-orange-500/30'
               }`}
             >
               <tab.icon className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -538,99 +538,105 @@ export default function SettingsPage() {
           <>
             {/* Sites Table */}
             {activeTab === 'sites' && (
-              <CrudTable
-                title="Sites"
-                icon={MapPin}
-                items={sites}
-                columns={[
-                  { field: 'id', header: 'ID', editable: false },
-                  { field: 'name', header: 'Site Name', editable: true, placeholder: 'e.g., Clark' },
-                  {
-                    field: 'is_active',
-                    header: 'Status',
-                    editable: false,
-                    render: (val) => (
-                      <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${val ? 'bg-vxi-orange-500/20 text-vxi-orange-400 border border-vxi-orange-500/50' : 'bg-red-900/30 text-red-400 border border-red-500/50'}`}>
-                        {val ? 'Active' : 'Inactive'}
-                      </span>
-                    )
-                  },
-                ]}
-                onAdd={handleAddSite}
-                onEdit={handleEditSite}
-                onDelete={handleDeleteSite}
-                onToggle={handleToggleSite}
-              />
+              <div className="animate-fade-in" key="sites">
+                <CrudTable
+                  title="Sites"
+                  icon={MapPin}
+                  items={sites}
+                  columns={[
+                    { field: 'id', header: 'ID', editable: false },
+                    { field: 'name', header: 'Site Name', editable: true, placeholder: 'e.g., Clark' },
+                    {
+                      field: 'is_active',
+                      header: 'Status',
+                      editable: false,
+                      render: (val) => (
+                        <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${val ? 'bg-vxi-orange-500/20 text-vxi-orange-400 border border-vxi-orange-500/50' : 'bg-red-900/30 text-red-400 border border-red-500/50'}`}>
+                          {val ? 'Active' : 'Inactive'}
+                        </span>
+                      )
+                    },
+                  ]}
+                  onAdd={handleAddSite}
+                  onEdit={handleEditSite}
+                  onDelete={handleDeleteSite}
+                  onToggle={handleToggleSite}
+                />
+              </div>
             )}
 
             {/* Rooms Table */}
             {activeTab === 'rooms' && (
-              <CrudTable
-                title="Rooms"
-                icon={DoorOpen}
-                items={rooms}
-                columns={[
-                  { field: 'id', header: 'ID', editable: false },
-                  { field: 'room_number', header: 'Room Number', editable: true, placeholder: 'e.g., 101' },
-                  {
-                    field: 'site_id',
-                    header: 'Site',
-                    editable: true,
-                    type: 'select',
-                    options: siteOptions,
-                    render: (val, item) => <span className="text-vxi-orange-400 font-medium">{item.site_name || '-'}</span>
-                  },
-                  { field: 'description', header: 'Description', editable: true, placeholder: 'e.g., Interview Room' },
-                  {
-                    field: 'is_active',
-                    header: 'Status',
-                    editable: false,
-                    render: (val) => (
-                      <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${val ? 'bg-vxi-orange-500/20 text-vxi-orange-400 border border-vxi-orange-500/50' : 'bg-red-900/30 text-red-400 border border-red-500/50'}`}>
-                        {val ? 'Active' : 'Inactive'}
-                      </span>
-                    )
-                  },
-                ]}
-                onAdd={handleAddRoom}
-                onEdit={handleEditRoom}
-                onDelete={handleDeleteRoom}
-                onToggle={handleToggleRoom}
-              />
+              <div className="animate-fade-in" key="rooms">
+                <CrudTable
+                  title="Rooms"
+                  icon={DoorOpen}
+                  items={rooms}
+                  columns={[
+                    { field: 'id', header: 'ID', editable: false },
+                    { field: 'room_number', header: 'Room Number', editable: true, placeholder: 'e.g., 101' },
+                    {
+                      field: 'site_id',
+                      header: 'Site',
+                      editable: true,
+                      type: 'select',
+                      options: siteOptions,
+                      render: (val, item) => <span className="text-vxi-orange-400 font-medium">{item.site_name || '-'}</span>
+                    },
+                    { field: 'description', header: 'Description', editable: true, placeholder: 'e.g., Interview Room' },
+                    {
+                      field: 'is_active',
+                      header: 'Status',
+                      editable: false,
+                      render: (val) => (
+                        <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${val ? 'bg-vxi-orange-500/20 text-vxi-orange-400 border border-vxi-orange-500/50' : 'bg-red-900/30 text-red-400 border border-red-500/50'}`}>
+                          {val ? 'Active' : 'Inactive'}
+                        </span>
+                      )
+                    },
+                  ]}
+                  onAdd={handleAddRoom}
+                  onEdit={handleEditRoom}
+                  onDelete={handleDeleteRoom}
+                  onToggle={handleToggleRoom}
+                />
+              </div>
             )}
 
             {/* Steps Table */}
             {activeTab === 'steps' && (
-              <CrudTable
-                title="Recruitment Steps"
-                icon={ListOrdered}
-                items={steps}
-                columns={[
-                  { field: 'id', header: 'ID', editable: false },
-                  { field: 'name', header: 'Step Name', editable: true, placeholder: 'e.g., Initial Interview' },
-                  { field: 'sequence', header: 'Order', editable: true, type: 'number', defaultValue: 0 },
-                  {
-                    field: 'is_active',
-                    header: 'Status',
-                    editable: false,
-                    render: (val) => (
-                      <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${val ? 'bg-vxi-orange-500/20 text-vxi-orange-400 border border-vxi-orange-500/50' : 'bg-red-900/30 text-red-400 border border-red-500/50'}`}>
-                        {val ? 'Active' : 'Inactive'}
-                      </span>
-                    )
-                  },
-                ]}
-                onAdd={handleAddStep}
-                onEdit={handleEditStep}
-                onDelete={handleDeleteStep}
-                onToggle={handleToggleStep}
-              />
+              <div className="animate-fade-in" key="steps">
+                <CrudTable
+                  title="Recruitment Steps"
+                  icon={ListOrdered}
+                  items={steps}
+                  columns={[
+                    { field: 'id', header: 'ID', editable: false },
+                    { field: 'name', header: 'Step Name', editable: true, placeholder: 'e.g., Initial Interview' },
+                    { field: 'sequence', header: 'Order', editable: true, type: 'number', defaultValue: 0 },
+                    {
+                      field: 'is_active',
+                      header: 'Status',
+                      editable: false,
+                      render: (val) => (
+                        <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${val ? 'bg-vxi-orange-500/20 text-vxi-orange-400 border border-vxi-orange-500/50' : 'bg-red-900/30 text-red-400 border border-red-500/50'}`}>
+                          {val ? 'Active' : 'Inactive'}
+                        </span>
+                      )
+                    },
+                  ]}
+                  onAdd={handleAddStep}
+                  onEdit={handleEditStep}
+                  onDelete={handleDeleteStep}
+                  onToggle={handleToggleStep}
+                />
+              </div>
             )}
           </>
         )}
 
         {/* Help Text */}
-        <div className="mt-4 sm:mt-6 bg-vxi-black-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-vxi-orange-500/30 shadow-xl">
+        <div className="mt-4 sm:mt-6 glass-card rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-vxi-orange-500/30 shadow-xl">
           <h3 className="font-bold text-vxi-orange-500 mb-3 text-base sm:text-lg flex items-center gap-2">
             <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

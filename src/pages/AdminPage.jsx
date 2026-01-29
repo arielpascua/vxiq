@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Volume2, Plus, Trash2, Monitor, Settings, Users, MapPin,
-  RefreshCw, Clock, ArrowRight, X, Menu, Search, Timer
+  RefreshCw, Clock, ArrowRight, X, Menu, Search, Timer, CheckCircle, AlertCircle, Info
 } from 'lucide-react';
 import { sitesAPI, roomsAPI, stepsAPI, queueAPI, speak } from '../api';
 
@@ -25,6 +25,13 @@ export default function AdminPage() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [now, setNow] = useState(Date.now());
+  const [toast, setToast] = useState(null); // { message, type: 'success'|'error'|'info' }
+  const [showConfirm, setShowConfirm] = useState(null); // { message, onConfirm }
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const [form, setForm] = useState({
     candidate_name: '',
@@ -154,15 +161,17 @@ export default function AdminPage() {
 
   const addToQueue = async () => {
     if (!form.candidate_name.trim() || !form.site_id || !form.room_id || !form.step_id) {
-      alert('Please fill all fields');
+      showToast('Please fill all fields', 'error');
       return;
     }
     try {
       await queueAPI.add(form);
+      showToast(`${form.candidate_name} added to queue`, 'success');
       setForm(f => ({ ...f, candidate_name: '' }));
       loadQueue();
     } catch (err) {
       console.error('Failed to add to queue:', err);
+      showToast('Failed to add candidate', 'error');
     }
   };
 
@@ -178,33 +187,35 @@ export default function AdminPage() {
   };
 
   const removeFromQueue = async (id) => {
-    if (!confirm('Remove this candidate from queue?')) return;
-    try {
-      await queueAPI.remove(id);
-      loadQueue();
-    } catch (err) {
-      console.error('Failed to remove:', err);
-    }
+    setShowConfirm({
+      message: 'Remove this candidate from queue?',
+      onConfirm: async () => {
+        try {
+          await queueAPI.remove(id);
+          showToast('Candidate removed', 'info');
+          loadQueue();
+        } catch (err) {
+          console.error('Failed to remove:', err);
+          showToast('Failed to remove candidate', 'error');
+        }
+        setShowConfirm(null);
+      }
+    });
   };
 
   const handleBulkMove = async () => {
     if (selectedCandidates.length === 0) {
-      alert('Please select at least one candidate');
+      showToast('Please select at least one candidate', 'error');
       return;
     }
 
     if (!bulkStepId) {
-      alert('Please select a step');
+      showToast('Please select a step', 'error');
       return;
     }
 
     if (!bulkRoomId) {
-      alert('Please select a room');
-      return;
-    }
-
-    const count = selectedCandidates.length;
-    if (!confirm(`Move ${count} selected candidate(s) to the selected step and room?`)) {
+      showToast('Please select a room', 'error');
       return;
     }
 
@@ -219,6 +230,7 @@ export default function AdminPage() {
         speak(announcement);
       }
 
+      showToast(`${selectedCandidates.length} candidate(s) moved successfully`, 'success');
       setShowBulkModal(false);
       setBulkRoomId('');
       setBulkStepId('');
@@ -227,7 +239,7 @@ export default function AdminPage() {
       loadQueue();
     } catch (err) {
       console.error('Failed to bulk move:', err);
-      alert('Failed to move candidates. Please try again.');
+      showToast('Failed to move candidates. Please try again.', 'error');
     }
   };
 
@@ -279,14 +291,14 @@ export default function AdminPage() {
             </select>
             <Link
               to="/settings"
-              className="flex items-center gap-2 bg-vxi-black-50 hover:bg-vxi-black-400 border border-vxi-white-300/20 px-4 py-2.5 rounded-xl transition-all duration-200 hover:scale-105"
+              className="flex items-center gap-2 bg-vxi-black-50 hover:bg-vxi-black-400 border border-vxi-white-300/20 px-4 py-2.5 rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-95"
             >
               <Settings className="w-5 h-5 text-vxi-white-200" />
               <span className="text-vxi-white-200">Settings</span>
             </Link>
             <Link
               to="/live"
-              className="flex items-center gap-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 px-4 py-2.5 rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"
+              className="flex items-center gap-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 px-4 py-2.5 rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-95 shadow-lg"
             >
               <Monitor className="w-5 h-5 text-white" />
               <span className="text-white font-medium">Live Queue</span>
@@ -315,7 +327,7 @@ export default function AdminPage() {
 
         {/* Mobile Menu Dropdown */}
         {showMobileMenu && (
-          <div className="md:hidden mt-3 pt-3 border-t border-vxi-white-300/10 flex gap-2">
+          <div className="md:hidden mt-3 pt-3 border-t border-vxi-white-300/10 flex gap-2 animate-slide-down">
             <Link
               to="/settings"
               className="flex-1 flex items-center justify-center gap-2 bg-vxi-black-50 border border-vxi-white-300/20 px-3 py-2.5 rounded-xl text-sm"
@@ -338,9 +350,11 @@ export default function AdminPage() {
 
       <div className="p-3 sm:p-6 max-w-7xl mx-auto">
         {/* Add to Queue Form */}
-        <div className="bg-vxi-black-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 border border-vxi-orange-500/30 shadow-xl">
+        <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 border border-vxi-orange-500/20 shadow-xl">
           <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-5 flex items-center gap-2 text-vxi-white">
-            <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-vxi-orange-500" />
+            <div className="bg-vxi-orange-500/20 p-1.5 rounded-lg">
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-vxi-orange-500" />
+            </div>
             Add Candidate
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
@@ -395,7 +409,7 @@ export default function AdminPage() {
           </div>
           <button
             onClick={addToQueue}
-            className="mt-4 sm:mt-5 w-full sm:w-auto bg-vxi-orange-500 hover:bg-vxi-orange-600 px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2 hover:scale-105 shadow-lg text-white"
+            className="mt-4 sm:mt-5 w-full sm:w-auto bg-gradient-to-r from-vxi-orange-500 to-vxi-orange-600 hover:from-vxi-orange-600 hover:to-vxi-orange-700 px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 shadow-lg shadow-vxi-orange-500/20 text-white"
           >
             <Plus className="w-5 h-5" />
             Add to Queue
@@ -403,7 +417,7 @@ export default function AdminPage() {
         </div>
 
         {/* Queue List */}
-        <div className="bg-vxi-black-100 rounded-xl sm:rounded-2xl border border-vxi-orange-500/30 shadow-xl overflow-hidden">
+        <div className="glass-card rounded-xl sm:rounded-2xl border border-vxi-orange-500/20 shadow-xl overflow-hidden">
           <div className="p-3 sm:p-5 border-b border-vxi-white-300/10">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2 text-vxi-white">
@@ -442,7 +456,7 @@ export default function AdminPage() {
                       }
                       setShowBulkModal(true);
                     }}
-                    className="flex items-center gap-1.5 sm:gap-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl transition-all hover:scale-105 shadow-lg text-white font-medium text-xs sm:text-sm"
+                    className="flex items-center gap-1.5 sm:gap-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl transition-all hover:scale-[1.02] active:scale-95 shadow-lg text-white font-medium text-xs sm:text-sm"
                     title="Move selected candidates"
                   >
                     <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -452,7 +466,7 @@ export default function AdminPage() {
                 {filteredQueue.length > 0 && (
                   <button
                     onClick={toggleSelectAll}
-                    className="flex items-center gap-1.5 bg-vxi-black-50 hover:bg-vxi-black-400 border border-vxi-white-300/20 px-3 py-2 rounded-lg sm:rounded-xl transition-all hover:scale-105 text-vxi-white-200 text-xs sm:text-sm"
+                    className="flex items-center gap-1.5 bg-vxi-black-50 hover:bg-vxi-black-400 border border-vxi-white-300/20 px-3 py-2 rounded-lg sm:rounded-xl transition-all hover:scale-[1.02] active:scale-95 text-vxi-white-200 text-xs sm:text-sm"
                     title={selectedCandidates.length === filteredQueue.length ? "Deselect all" : "Select all"}
                   >
                     {selectedCandidates.length === filteredQueue.length ? 'Deselect' : 'Select All'}
@@ -460,7 +474,7 @@ export default function AdminPage() {
                 )}
                 <button
                   onClick={loadQueue}
-                  className="p-2 sm:p-2.5 bg-vxi-black-50 hover:bg-vxi-black-400 border border-vxi-white-300/20 rounded-lg sm:rounded-xl transition-all hover:scale-105"
+                  className="p-2 sm:p-2.5 bg-vxi-black-50 hover:bg-vxi-black-400 border border-vxi-white-300/20 rounded-lg sm:rounded-xl transition-all hover:scale-[1.02] active:scale-95"
                   title="Refresh"
                 >
                   <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 text-vxi-white-200" />
@@ -471,11 +485,17 @@ export default function AdminPage() {
 
           <div className="divide-y divide-vxi-white-300/10 max-h-[60vh] sm:max-h-[600px] overflow-y-auto">
             {loading ? (
-              <div className="p-8 sm:p-12 text-center text-vxi-white-400">Loading...</div>
+              <div className="p-8 sm:p-12 text-center text-vxi-white-400">
+                <RefreshCw className="w-8 h-8 mx-auto mb-3 animate-spin text-vxi-orange-500/50" />
+                <p>Loading queue...</p>
+              </div>
             ) : filteredQueue.length === 0 ? (
-              <div className="p-8 sm:p-12 text-center">
-                <Users className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-vxi-white-400 mb-3 opacity-50" />
-                <p className="text-vxi-white-400 text-base sm:text-lg">No candidates in queue</p>
+              <div className="p-8 sm:p-12 text-center animate-fade-in">
+                <div className="bg-vxi-orange-500/10 w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full flex items-center justify-center mb-4">
+                  <Users className="w-10 h-10 sm:w-12 sm:h-12 text-vxi-orange-500/40" />
+                </div>
+                <p className="text-vxi-white-400 text-base sm:text-lg font-medium">No candidates in queue</p>
+                <p className="text-vxi-white-400/60 text-xs sm:text-sm mt-1">Add a candidate above to get started</p>
               </div>
             ) : (
               filteredQueue.map(item => (
@@ -537,7 +557,7 @@ export default function AdminPage() {
                       {(item.status === 'waiting' || item.status === 'ongoing') && (
                         <button
                           onClick={() => callCandidate(item)}
-                          className="flex items-center gap-1.5 sm:gap-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all font-semibold hover:scale-105 shadow-lg text-white text-sm"
+                          className="flex items-center gap-1.5 sm:gap-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all font-semibold hover:scale-[1.02] active:scale-95 shadow-lg text-white text-sm"
                         >
                           <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />
                           Call
@@ -546,7 +566,7 @@ export default function AdminPage() {
                       {item.status === 'called' && (
                         <button
                           onClick={() => callCandidate(item)}
-                          className="flex items-center gap-1.5 sm:gap-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all font-semibold hover:scale-105 shadow-lg text-white text-sm"
+                          className="flex items-center gap-1.5 sm:gap-2 bg-vxi-orange-500 hover:bg-vxi-orange-600 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all font-semibold hover:scale-[1.02] active:scale-95 shadow-lg text-white text-sm"
                         >
                           <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />
                           <span className="hidden xs:inline">Call Again</span>
@@ -571,8 +591,8 @@ export default function AdminPage() {
 
       {/* Bulk Move Modal */}
       {showBulkModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
-          <div className="bg-vxi-black-100 rounded-xl sm:rounded-2xl border-2 border-vxi-orange-500 shadow-2xl max-w-md w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 animate-fade-in">
+          <div className="bg-vxi-black-100 rounded-xl sm:rounded-2xl border-2 border-vxi-orange-500 shadow-2xl shadow-vxi-orange-500/10 max-w-md w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between mb-4 sm:mb-5">
               <h3 className="text-xl sm:text-2xl font-bold text-vxi-white flex items-center gap-2">
                 <ArrowRight className="w-6 h-6 sm:w-7 sm:h-7 text-vxi-orange-500" />
@@ -667,7 +687,7 @@ export default function AdminPage() {
               <button
                 onClick={handleBulkMove}
                 disabled={!bulkRoomId || !bulkStepId}
-                className="flex-1 bg-vxi-orange-500 hover:bg-vxi-orange-600 disabled:bg-vxi-black-50 disabled:text-vxi-white-400 disabled:cursor-not-allowed px-6 py-3 rounded-xl font-bold transition-all hover:scale-105 shadow-lg text-white flex items-center justify-center gap-2 text-sm sm:text-base"
+                className="flex-1 bg-gradient-to-r from-vxi-orange-500 to-vxi-orange-600 hover:from-vxi-orange-600 hover:to-vxi-orange-700 disabled:from-vxi-black-50 disabled:to-vxi-black-50 disabled:text-vxi-white-400 disabled:cursor-not-allowed px-6 py-3 rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-vxi-orange-500/20 text-white flex items-center justify-center gap-2 text-sm sm:text-base"
               >
                 <ArrowRight className="w-5 h-5" />
                 Confirm Move
@@ -684,6 +704,56 @@ export default function AdminPage() {
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Confirm Dialog */}
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-fade-in">
+          <div className="bg-vxi-black-100 rounded-2xl border-2 border-vxi-white-300/20 shadow-2xl max-w-sm w-full p-6 animate-scale-in">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-vxi-orange-500/20 p-2 rounded-full">
+                <AlertCircle className="w-6 h-6 text-vxi-orange-500" />
+              </div>
+              <h3 className="text-lg font-bold text-vxi-white">Confirm Action</h3>
+            </div>
+            <p className="text-vxi-white-300 mb-6">{showConfirm.message}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={showConfirm.onConfirm}
+                className="flex-1 bg-gradient-to-r from-vxi-orange-500 to-vxi-orange-600 hover:from-vxi-orange-600 hover:to-vxi-orange-700 px-4 py-2.5 rounded-xl font-semibold text-white transition-all active:scale-95"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={() => setShowConfirm(null)}
+                className="flex-1 bg-vxi-black-50 hover:bg-vxi-black-400 border border-vxi-white-300/20 px-4 py-2.5 rounded-xl text-vxi-white-200 transition-all active:scale-95"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-[70] toast-enter">
+          <div className={`flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl border backdrop-blur-md ${
+            toast.type === 'success'
+              ? 'bg-green-500/20 border-green-500/50 text-green-400'
+              : toast.type === 'error'
+              ? 'bg-red-500/20 border-red-500/50 text-red-400'
+              : 'bg-blue-500/20 border-blue-500/50 text-blue-400'
+          }`}>
+            {toast.type === 'success' ? <CheckCircle className="w-5 h-5 flex-shrink-0" /> :
+             toast.type === 'error' ? <AlertCircle className="w-5 h-5 flex-shrink-0" /> :
+             <Info className="w-5 h-5 flex-shrink-0" />}
+            <span className="text-sm font-medium">{toast.message}</span>
+            <button onClick={() => setToast(null)} className="ml-2 opacity-60 hover:opacity-100">
+              <X className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}

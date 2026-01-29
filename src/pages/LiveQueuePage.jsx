@@ -112,23 +112,25 @@ export default function LiveQueuePage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Auto-carousel for applicants - use ref to avoid resetting interval on queue polls
+  // Auto-carousel for applicants
+  const carouselRef = useRef(null);
   const queueRef = useRef(queue);
   queueRef.current = queue;
+  const itemsPerPageRef = useRef(itemsPerPage);
+  itemsPerPageRef.current = itemsPerPage;
 
   useEffect(() => {
-    const carouselInterval = setInterval(() => {
+    if (carouselRef.current) clearInterval(carouselRef.current);
+    carouselRef.current = setInterval(() => {
       const applicantQueue = queueRef.current.filter(q => q.status === 'waiting' || q.status === 'ongoing' || q.status === 'called');
-      const totalPages = Math.ceil(applicantQueue.length / itemsPerPage);
-      if (totalPages <= 1) {
-        setCurrentPage(0);
-        return;
+      const total = Math.ceil(applicantQueue.length / itemsPerPageRef.current);
+      if (total > 1) {
+        setCurrentPage(prev => (prev + 1) % total);
       }
-      setCurrentPage(prev => (prev + 1) % totalPages);
-    }, 12000); // Change page every 12 seconds
+    }, 12000);
 
-    return () => clearInterval(carouselInterval);
-  }, [itemsPerPage]);
+    return () => clearInterval(carouselRef.current);
+  }, []);
 
   // Filter called items that should still be visible (within 30 seconds)
   const visibleCalledQueue = queue.filter(q => {

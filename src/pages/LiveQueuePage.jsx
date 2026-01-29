@@ -112,22 +112,23 @@ export default function LiveQueuePage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Auto-carousel for applicants
+  // Auto-carousel for applicants - use ref to avoid resetting interval on queue polls
+  const queueRef = useRef(queue);
+  queueRef.current = queue;
+
   useEffect(() => {
-    const applicantQueue = queue.filter(q => q.status === 'waiting' || q.status === 'ongoing' || q.status === 'called');
-    const totalPages = Math.ceil(applicantQueue.length / itemsPerPage);
-
-    if (totalPages <= 1) {
-      setCurrentPage(0);
-      return;
-    }
-
     const carouselInterval = setInterval(() => {
+      const applicantQueue = queueRef.current.filter(q => q.status === 'waiting' || q.status === 'ongoing' || q.status === 'called');
+      const totalPages = Math.ceil(applicantQueue.length / itemsPerPage);
+      if (totalPages <= 1) {
+        setCurrentPage(0);
+        return;
+      }
       setCurrentPage(prev => (prev + 1) % totalPages);
     }, 12000); // Change page every 12 seconds
 
     return () => clearInterval(carouselInterval);
-  }, [queue, itemsPerPage]);
+  }, [itemsPerPage]);
 
   // Filter called items that should still be visible (within 30 seconds)
   const visibleCalledQueue = queue.filter(q => {
@@ -379,7 +380,7 @@ export default function LiveQueuePage() {
                       #{(currentPage * itemsPerPage) + index + 1}
                     </span>
                   </div>
-                  <p className={`${sz.name} font-bold truncate text-vxi-white leading-tight`} title={item.candidate_name}>
+                  <p className={`${sz.name} font-bold text-vxi-white leading-tight break-words`}>
                     {item.candidate_name}
                   </p>
                   <div className={`flex flex-col ${sz.gap}`}>

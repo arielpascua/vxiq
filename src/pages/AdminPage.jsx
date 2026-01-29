@@ -576,9 +576,13 @@ export default function AdminPage() {
                             Room {item.room_number}
                           </span>
                           <span className="text-vxi-orange-400 font-medium truncate">{item.step_name}</span>
-                          <span className="flex items-center gap-1 font-mono text-xs bg-vxi-black-50 px-2 py-0.5 rounded-lg border border-vxi-white-300/20">
-                            <Timer className="w-3 h-3 text-vxi-orange-500" />
+                          <span className="flex items-center gap-1 font-mono text-xs bg-vxi-black-50 px-2 py-0.5 rounded-lg border border-vxi-white-300/20" title="Overall time">
+                            <Timer className="w-3 h-3 text-vxi-white-400" />
                             {getElapsedTime(item.created_at)}
+                          </span>
+                          <span className="flex items-center gap-1 font-mono text-xs bg-vxi-black-50 px-2 py-0.5 rounded-lg border border-vxi-orange-500/30" title="Current step time">
+                            <Timer className="w-3 h-3 text-vxi-orange-500" />
+                            {getElapsedTime(item.status_changed_at || item.created_at)}
                           </span>
                         </div>
                       </div>

@@ -167,24 +167,13 @@ export default function LiveQueuePage() {
     (currentPage + 1) * itemsPerPage
   );
 
-  const getElapsedTime = (timestamp) => {
-    if (!timestamp) return '--:--';
-    const elapsed = Math.floor((currentTime - new Date(timestamp + 'Z').getTime()) / 1000);
-    if (elapsed < 0) return '00:00';
-    const hrs = Math.floor(elapsed / 3600);
-    const mins = Math.floor((elapsed % 3600) / 60);
-    const secs = elapsed % 60;
-    const pad = (n) => n.toString().padStart(2, '0');
-    return hrs > 0 ? `${pad(hrs)}:${pad(mins)}:${pad(secs)}` : `${pad(mins)}:${pad(secs)}`;
-  };
-
   // Dynamic sizing based on cards per page
   const cardSize = itemsPerPage <= 4 ? 'xl' : itemsPerPage <= 8 ? 'lg' : itemsPerPage <= 16 ? 'md' : 'sm';
   const sizeMap = {
-    xl:  { dot: 'w-5 h-5', num: 'text-3xl', name: 'text-5xl', meta: 'text-2xl', metaPad: 'px-4 py-2', pad: 'p-6', gap: 'gap-4', round: 'rounded-lg', timer: 'text-xl' },
-    lg:  { dot: 'w-4 h-4', num: 'text-xl', name: 'text-3xl', meta: 'text-lg', metaPad: 'px-3 py-1.5', pad: 'p-4', gap: 'gap-3', round: 'rounded-lg', timer: 'text-base' },
-    md:  { dot: 'w-3 h-3', num: 'text-base', name: 'text-xl', meta: 'text-sm', metaPad: 'px-2 py-1', pad: 'p-3', gap: 'gap-2', round: 'rounded-md', timer: 'text-xs' },
-    sm:  { dot: 'w-2 h-2', num: 'text-sm', name: 'text-base', meta: 'text-xs', metaPad: 'px-1.5 py-0.5', pad: 'p-2', gap: 'gap-1.5', round: 'rounded-md', timer: 'text-[10px]' },
+    xl:  { dot: 'w-5 h-5', num: 'text-3xl', name: 'text-5xl', meta: 'text-2xl', metaPad: 'px-4 py-2', pad: 'p-6', gap: 'gap-4', round: 'rounded-lg' },
+    lg:  { dot: 'w-4 h-4', num: 'text-xl', name: 'text-3xl', meta: 'text-lg', metaPad: 'px-3 py-1.5', pad: 'p-4', gap: 'gap-3', round: 'rounded-lg' },
+    md:  { dot: 'w-3 h-3', num: 'text-base', name: 'text-xl', meta: 'text-sm', metaPad: 'px-2 py-1', pad: 'p-3', gap: 'gap-2', round: 'rounded-md' },
+    sm:  { dot: 'w-2 h-2', num: 'text-sm', name: 'text-base', meta: 'text-xs', metaPad: 'px-1.5 py-0.5', pad: 'p-2', gap: 'gap-1.5', round: 'rounded-md' },
   };
   const sz = sizeMap[cardSize];
 
@@ -383,25 +372,15 @@ export default function LiveQueuePage() {
                     item.status === 'ongoing' ? 'border-l-green-500' : 'border-l-red-500'
                   } border-t border-r border-b border-t-vxi-white-300/10 border-r-vxi-white-300/10 border-b-vxi-white-300/10 ${sz.round} ${sz.pad} hover:bg-vxi-black-50 hover:border-t-vxi-orange-500/30 hover:border-r-vxi-orange-500/30 hover:border-b-vxi-orange-500/30 transition-all`}
                 >
-                  <div className={`flex items-center justify-between`}>
-                    <div className={`flex items-center ${sz.gap}`}>
-                      <div className={`${sz.dot} rounded-full flex-shrink-0 ${
-                        item.status === 'ongoing'
-                          ? 'bg-green-500 shadow-md shadow-green-500/50'
-                          : 'bg-red-500 shadow-md shadow-red-500/50'
-                      }`} />
-                      <span className={`${sz.num} text-vxi-orange-500 font-bold`}>
-                        #{(currentPage * itemsPerPage) + index + 1}
-                      </span>
-                    </div>
-                    <div className={`flex ${sz.gap} font-mono`}>
-                      <span className={`${sz.timer} text-vxi-white-400`} title="Overall time">
-                        {getElapsedTime(item.created_at)}
-                      </span>
-                      <span className={`${sz.timer} text-vxi-orange-400`} title="Current step time">
-                        {getElapsedTime(item.status_changed_at || item.created_at)}
-                      </span>
-                    </div>
+                  <div className={`flex items-center ${sz.gap}`}>
+                    <div className={`${sz.dot} rounded-full flex-shrink-0 ${
+                      item.status === 'ongoing'
+                        ? 'bg-green-500 shadow-md shadow-green-500/50'
+                        : 'bg-red-500 shadow-md shadow-red-500/50'
+                    }`} />
+                    <span className={`${sz.num} text-vxi-orange-500 font-bold`}>
+                      #{(currentPage * itemsPerPage) + index + 1}
+                    </span>
                   </div>
                   <p className={`${sz.name} font-bold text-vxi-white leading-tight break-words`}>
                     {item.candidate_name}

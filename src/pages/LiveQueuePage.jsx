@@ -114,7 +114,7 @@ export default function LiveQueuePage() {
 
   // Auto-carousel for applicants
   useEffect(() => {
-    const applicantQueue = queue.filter(q => q.status === 'waiting' || q.status === 'ongoing');
+    const applicantQueue = queue.filter(q => q.status === 'waiting' || q.status === 'ongoing' || q.status === 'called');
     const totalPages = Math.ceil(applicantQueue.length / itemsPerPage);
 
     if (totalPages <= 1) {
@@ -157,7 +157,7 @@ export default function LiveQueuePage() {
     return () => clearInterval(fadeInterval);
   }, []);
 
-  const applicantQueue = queue.filter(q => q.status === 'waiting' || q.status === 'ongoing');
+  const applicantQueue = queue.filter(q => q.status === 'waiting' || q.status === 'ongoing' || q.status === 'called');
   const totalPages = Math.ceil(applicantQueue.length / itemsPerPage);
   const paginatedApplicants = applicantQueue.slice(
     currentPage * itemsPerPage,
@@ -382,8 +382,8 @@ export default function LiveQueuePage() {
                   <p className={`${sz.name} font-bold truncate text-vxi-white leading-tight`} title={item.candidate_name}>
                     {item.candidate_name}
                   </p>
-                  <div className={`flex items-center ${sz.gap}`}>
-                    <span className={`${sz.meta} text-vxi-white-400 bg-vxi-black-50 ${sz.metaPad} ${sz.round} font-medium`}>
+                  <div className={`flex items-center ${sz.gap} overflow-hidden`}>
+                    <span className={`${sz.meta} text-vxi-white-400 bg-vxi-black-50 ${sz.metaPad} ${sz.round} font-medium truncate flex-shrink-0 max-w-[50%]`} title={item.room_number}>
                       {item.room_number}
                     </span>
                     <span className={`${sz.meta} text-vxi-orange-400 truncate font-medium`} title={item.step_name}>

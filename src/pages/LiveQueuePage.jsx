@@ -348,7 +348,8 @@ export default function LiveQueuePage() {
           ) : (
             <div
               ref={applicantGridRef}
-              className="flex-1 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 auto-rows-min content-start overflow-hidden carousel-page"
+              className="flex-1 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 overflow-hidden carousel-page"
+              style={{ gridAutoRows: '1fr' }}
               key={currentPage}
             >
               {paginatedApplicants.map((item, index) => (

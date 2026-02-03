@@ -364,44 +364,54 @@ export default function LiveQueuePage() {
               style={{ gridAutoRows: '1fr' }}
               key={currentPage}
             >
-              {paginatedApplicants.map((item, index) => (
+              {paginatedApplicants.map((item, index) => {
+                const statusColor = item.status === 'ongoing' ? '#22c55e' : item.status === 'called' ? '#FF6B35' : '#ef4444';
+                return (
                 <div
                   key={item.id}
-                  className={`flex flex-col items-center justify-between text-center bg-gradient-to-br from-vxi-black-100/80 to-vxi-black-200/60 backdrop-blur-sm border border-vxi-white-300/10 ${sz.round} ${sz.pad} hover:border-vxi-orange-500/30 transition-all relative overflow-hidden`}
+                  className={`relative flex flex-col ${sz.round} overflow-hidden transition-all`}
+                  style={{
+                    background: `linear-gradient(160deg, rgba(26,26,26,0.95) 0%, rgba(15,15,15,0.9) 100%)`,
+                    border: `1px solid rgba(255,255,255,0.06)`,
+                    borderTop: `3px solid ${statusColor}`,
+                    boxShadow: `0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03)`,
+                  }}
                 >
-                  {/* Status accent bar */}
-                  <div className={`absolute top-0 left-0 right-0 h-1 ${
-                    item.status === 'ongoing' ? 'bg-green-500' : item.status === 'called' ? 'bg-vxi-orange-500' : 'bg-red-500'
-                  }`} />
-
-                  {/* Queue number + status dot */}
-                  <div className={`flex items-center justify-center ${sz.gap} w-full`}>
-                    <div className={`${sz.dot} rounded-full flex-shrink-0 ${
-                      item.status === 'ongoing'
-                        ? 'bg-green-500 shadow-md shadow-green-500/50'
-                        : 'bg-red-500 shadow-md shadow-red-500/50'
-                    }`} />
-                    <span className={`${sz.num} text-vxi-orange-500 font-bold`}>
-                      #{(currentPage * itemsPerPage) + index + 1}
-                    </span>
+                  {/* Top section: Queue number badge */}
+                  <div className={`flex items-center justify-center ${sz.pad} pb-0`}>
+                    <div
+                      className={`inline-flex items-center ${sz.gap} ${sz.metaPad} ${sz.round}`}
+                      style={{ background: `${statusColor}15`, border: `1px solid ${statusColor}40` }}
+                    >
+                      <div className={`${sz.dot} rounded-full flex-shrink-0`} style={{ background: statusColor, boxShadow: `0 0 8px ${statusColor}80` }} />
+                      <span className={`${sz.num} font-extrabold`} style={{ color: statusColor }}>
+                        #{(currentPage * itemsPerPage) + index + 1}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Candidate name - hero element */}
-                  <p className={`${sz.name} font-bold text-vxi-white leading-tight break-words w-full`}>
-                    {item.candidate_name}
-                  </p>
+                  {/* Center: Candidate name — the hero */}
+                  <div className={`flex-1 flex items-center justify-center ${sz.pad}`}>
+                    <p className={`${sz.name} font-extrabold text-white leading-tight break-words text-center w-full`} style={{ textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>
+                      {item.candidate_name}
+                    </p>
+                  </div>
 
-                  {/* Room & Step */}
-                  <div className={`flex flex-col items-center ${sz.gap} w-full`}>
+                  {/* Bottom: Room & Step in a separated footer compartment */}
+                  <div
+                    className={`flex items-center justify-center ${sz.gap} ${sz.pad} pt-0`}
+                    style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+                  >
                     <span className={`${sz.meta} text-vxi-white-300 font-medium`}>
                       {item.room_number}
                     </span>
-                    <span className={`${sz.meta} text-vxi-orange-400 font-semibold`}>
+                    <span className={`${sz.meta} opacity-30`}>•</span>
+                    <span className={`${sz.meta} font-semibold`} style={{ color: '#FF6B35' }}>
                       {item.step_name}
                     </span>
                   </div>
                 </div>
-              ))}
+              );})}
             </div>
           )}
         </div>

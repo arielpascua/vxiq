@@ -83,23 +83,19 @@ export default function LiveQueuePage() {
           setTimeout(() => setFlashId(null), 5000);
           newTimestamps[id] = now; // Record when this was called
 
-          // TTS announcement on TV - only for fresh calls
+          // TTS announcement on TV - this is the primary audio source
           const item = queueData.find(q => q.id === id);
           if (item && item.called_at) {
             const calledAtTime = new Date(item.called_at + 'Z').getTime();
-            const timeSinceCalled = now - calledAtTime;
-            const timeSincePageLoad = now - pageLoadTimeRef.current;
             const callTimeKey = `${id}-${item.called_at}`;
 
             // Only announce if:
-            // 1. This specific call hasn't been announced yet (prevents duplicates)
+            // 1. This specific call hasn't been announced yet (prevents re-announcing on re-call)
             // 2. The call happened after the page loaded (skip pre-existing called items)
-            // 3. The call is fresh (within last 10 seconds - gives buffer for network delay)
             const isNewCall = !announcedCallTimesRef.current.has(callTimeKey);
-            const isAfterPageLoad = calledAtTime > pageLoadTimeRef.current - 5000; // 5s grace period
-            const isFreshCall = timeSinceCalled < 10000;
+            const isAfterPageLoad = calledAtTime > pageLoadTimeRef.current - 2000; // 2s grace period
 
-            if (isNewCall && isAfterPageLoad && isFreshCall) {
+            if (isNewCall && isAfterPageLoad) {
               announcedCallTimesRef.current.add(callTimeKey);
               speak(`${item.candidate_name}, please proceed to ${item.room_number} for your ${item.step_name}.`);
             }

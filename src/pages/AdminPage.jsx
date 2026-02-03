@@ -4,7 +4,7 @@ import {
   Volume2, Plus, Trash2, Monitor, Settings, Users, MapPin,
   RefreshCw, Clock, ArrowRight, X, Menu, Search, Timer, CheckCircle, AlertCircle, Info, Pencil, Check
 } from 'lucide-react';
-import { sitesAPI, roomsAPI, stepsAPI, queueAPI, speak } from '../api';
+import { sitesAPI, roomsAPI, stepsAPI, queueAPI } from '../api';
 
 export default function AdminPage() {
   const [sites, setSites] = useState([]);
@@ -189,8 +189,7 @@ export default function AdminPage() {
   };
 
   const callCandidate = async (item) => {
-    const announcement = `${item.candidate_name}, please proceed to ${item.room_number} for your ${item.step_name}.`;
-    speak(announcement);
+    // Audio announcement is played on the TV (LiveQueuePage), not here
     try {
       await queueAPI.call(item.id);
       loadQueue();
@@ -246,14 +245,7 @@ export default function AdminPage() {
 
     try {
       const result = await queueAPI.bulkMove(selectedCandidates, bulkStepId, bulkRoomId, bulkStatus);
-
-      // Announce all moved candidates together (only if status is not 'waiting')
-      if (bulkStatus !== 'waiting' && result.candidates && result.candidates.length > 0) {
-        const names = result.candidates.map(c => c.candidate_name).join(', ');
-        const { room_number, step_name } = result.candidates[0];
-        const announcement = `${names}, please proceed to ${room_number} for your ${step_name}.`;
-        speak(announcement);
-      }
+      // Audio announcement is played on the TV (LiveQueuePage), not here
 
       showToast(`${selectedCandidates.length} candidate(s) moved successfully`, 'success');
       setShowBulkModal(false);

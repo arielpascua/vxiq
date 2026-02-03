@@ -24,6 +24,10 @@ export default function LiveQueuePage() {
   const lastCalledIdsRef = useRef(new Set());
   const calledTimestampsRef = useRef({});
   const applicantGridRef = useRef(null);
+  // Track announced called_at timestamps to prevent duplicates
+  const announcedCallTimesRef = useRef(new Set());
+  // Track page load time to skip existing "called" candidates on initial load
+  const pageLoadTimeRef = useRef(Date.now());
 
   // Load sites and listen for filter changes from admin page
   useEffect(() => {
@@ -78,10 +82,27 @@ export default function LiveQueuePage() {
           setFlashId(id);
           setTimeout(() => setFlashId(null), 5000);
           newTimestamps[id] = now; // Record when this was called
-          // TTS announcement on TV
+
+          // TTS announcement on TV - only for fresh calls
           const item = queueData.find(q => q.id === id);
-          if (item) {
-            speak(`${item.candidate_name}, please proceed to ${item.room_number} for your ${item.step_name}.`);
+          if (item && item.called_at) {
+            const calledAtTime = new Date(item.called_at + 'Z').getTime();
+            const timeSinceCalled = now - calledAtTime;
+            const timeSincePageLoad = now - pageLoadTimeRef.current;
+            const callTimeKey = `${id}-${item.called_at}`;
+
+            // Only announce if:
+            // 1. This specific call hasn't been announced yet (prevents duplicates)
+            // 2. The call happened after the page loaded (skip pre-existing called items)
+            // 3. The call is fresh (within last 10 seconds - gives buffer for network delay)
+            const isNewCall = !announcedCallTimesRef.current.has(callTimeKey);
+            const isAfterPageLoad = calledAtTime > pageLoadTimeRef.current - 5000; // 5s grace period
+            const isFreshCall = timeSinceCalled < 10000;
+
+            if (isNewCall && isAfterPageLoad && isFreshCall) {
+              announcedCallTimesRef.current.add(callTimeKey);
+              speak(`${item.candidate_name}, please proceed to ${item.room_number} for your ${item.step_name}.`);
+            }
           }
         }
       });
@@ -92,6 +113,17 @@ export default function LiveQueuePage() {
           delete newTimestamps[id];
         }
       });
+
+      // Clean up old announced call times (keep only recent ones to prevent memory growth)
+      const oneMinuteAgo = now - 60000;
+      const currentAnnouncedTimes = new Set();
+      announcedCallTimesRef.current.forEach(key => {
+        const callTime = key.split('-').slice(1).join('-'); // Extract timestamp part
+        if (new Date(callTime + 'Z').getTime() > oneMinuteAgo) {
+          currentAnnouncedTimes.add(key);
+        }
+      });
+      announcedCallTimesRef.current = currentAnnouncedTimes;
 
       calledTimestampsRef.current = newTimestamps;
       lastCalledIdsRef.current = currentCalledIds;

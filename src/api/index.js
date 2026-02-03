@@ -64,28 +64,87 @@ export const queueAPI = {
 
 // TTS Function — preload voices to avoid race condition
 let cachedVoice = null;
+let voicesLoaded = false;
+let voiceLoadPromise = null;
+
 const loadVoice = () => {
   const voices = window.speechSynthesis?.getVoices() || [];
-  cachedVoice = voices.find(v =>
-    v.name.includes('Google') ||
-    v.name.includes('Microsoft') ||
-    v.name.includes('Samantha') ||
-    v.lang.startsWith('en')
-  ) || null;
+  if (voices.length > 0) {
+    cachedVoice = voices.find(v =>
+      v.name.includes('Google') ||
+      v.name.includes('Microsoft') ||
+      v.name.includes('Samantha') ||
+      v.lang.startsWith('en')
+    ) || voices[0]; // Fallback to first available voice
+    voicesLoaded = true;
+  }
+  return voices.length > 0;
 };
+
+// Wait for voices to be available (with timeout)
+const waitForVoices = () => {
+  if (voicesLoaded) return Promise.resolve(true);
+  if (voiceLoadPromise) return voiceLoadPromise;
+
+  voiceLoadPromise = new Promise((resolve) => {
+    // Try immediate load first
+    if (loadVoice()) {
+      resolve(true);
+      return;
+    }
+
+    // Set up listener for voiceschanged
+    const onVoicesChanged = () => {
+      if (loadVoice()) {
+        window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+        resolve(true);
+      }
+    };
+    window.speechSynthesis.addEventListener('voiceschanged', onVoicesChanged);
+
+    // Also try polling as some browsers don't fire voiceschanged reliably
+    let attempts = 0;
+    const pollVoices = setInterval(() => {
+      attempts++;
+      if (loadVoice() || attempts >= 20) { // Max 2 seconds of polling
+        clearInterval(pollVoices);
+        window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+        resolve(voicesLoaded);
+      }
+    }, 100);
+
+    // Timeout after 3 seconds
+    setTimeout(() => {
+      clearInterval(pollVoices);
+      window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+      resolve(voicesLoaded);
+    }, 3000);
+  });
+
+  return voiceLoadPromise;
+};
+
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
   loadVoice();
   window.speechSynthesis.addEventListener('voiceschanged', loadVoice);
+  // Pre-warm TTS engine by loading voices
+  waitForVoices();
 }
 
-export const speak = (text, rate = 0.85) => {
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = rate;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-    if (cachedVoice) utterance.voice = cachedVoice;
-    window.speechSynthesis.speak(utterance);
-  }
+export const speak = async (text, rate = 0.85) => {
+  if (!('speechSynthesis' in window)) return;
+
+  // Wait for voices to be loaded (with timeout)
+  await waitForVoices();
+
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = rate;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  if (cachedVoice) utterance.voice = cachedVoice;
+  window.speechSynthesis.speak(utterance);
 };
+
+// Check if voices are ready (for components that want to know)
+export const areVoicesReady = () => voicesLoaded;

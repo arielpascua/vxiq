@@ -26,8 +26,6 @@ export default function LiveQueuePage() {
   const applicantGridRef = useRef(null);
   // Track announced called_at timestamps to prevent duplicates
   const announcedCallTimesRef = useRef(new Set());
-  // Track page load time to skip existing "called" candidates on initial load
-  const pageLoadTimeRef = useRef(Date.now());
 
   // Load sites and listen for filter changes from admin page
   useEffect(() => {
@@ -85,17 +83,13 @@ export default function LiveQueuePage() {
 
           // TTS announcement on TV - this is the primary audio source
           const item = queueData.find(q => q.id === id);
-          if (item && item.called_at) {
-            const calledAtTime = new Date(item.called_at + 'Z').getTime();
-            const callTimeKey = `${id}-${item.called_at}`;
+          if (item) {
+            // Use called_at timestamp as unique key to prevent duplicate announcements
+            // If called_at is missing (shouldn't happen), use id with current time
+            const callTimeKey = item.called_at ? `${id}-${item.called_at}` : `${id}-${now}`;
 
-            // Only announce if:
-            // 1. This specific call hasn't been announced yet (prevents re-announcing on re-call)
-            // 2. The call happened after the page loaded (skip pre-existing called items)
-            const isNewCall = !announcedCallTimesRef.current.has(callTimeKey);
-            const isAfterPageLoad = calledAtTime > pageLoadTimeRef.current - 2000; // 2s grace period
-
-            if (isNewCall && isAfterPageLoad) {
+            // Announce if this specific call hasn't been announced yet
+            if (!announcedCallTimesRef.current.has(callTimeKey)) {
               announcedCallTimesRef.current.add(callTimeKey);
               speak(`${item.candidate_name}, please proceed to ${item.room_number} for your ${item.step_name}.`);
             }
@@ -132,10 +126,10 @@ export default function LiveQueuePage() {
     }
   }, [selectedSite]);
 
-  // Auto-refresh polling - runs every 2 seconds
+  // Auto-refresh polling - runs every 1 second for near real-time updates
   useEffect(() => {
     loadQueue();
-    const interval = setInterval(loadQueue, 2000); // Poll every 2 seconds
+    const interval = setInterval(loadQueue, 1000); // Poll every 1 second
     return () => clearInterval(interval);
   }, [loadQueue]);
 

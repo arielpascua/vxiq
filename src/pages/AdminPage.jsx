@@ -488,6 +488,31 @@ export default function AdminPage() {
                     <span className="hidden xs:inline">Move</span> ({selectedCandidates.length})
                   </button>
                 )}
+                {selectedCandidates.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setShowConfirm({
+                        message: `Remove ${selectedCandidates.length} selected candidate(s) from queue?`,
+                        onConfirm: async () => {
+                          try {
+                            await Promise.all(selectedCandidates.map(id => queueAPI.remove(id)));
+                            showToast(`Removed ${selectedCandidates.length} candidate(s)`, 'info');
+                            setSelectedCandidates([]);
+                            loadQueue();
+                          } catch (err) {
+                            showToast('Failed to remove candidates', 'error');
+                          }
+                          setShowConfirm(null);
+                        }
+                      });
+                    }}
+                    className="flex items-center gap-1.5 bg-vxi-black-50/50 hover:bg-red-600 border border-vxi-white-300/20 hover:border-red-600 px-3 py-2 rounded-lg sm:rounded-xl transition-all hover:scale-[1.02] active:scale-95 text-vxi-white-300 hover:text-white text-xs sm:text-sm"
+                    title="Delete selected candidates"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span className="hidden xs:inline">Delete</span> ({selectedCandidates.length})
+                  </button>
+                )}
                 {filteredQueue.length > 0 && (
                   <button
                     onClick={toggleSelectAll}

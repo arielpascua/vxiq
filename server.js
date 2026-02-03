@@ -10,8 +10,13 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Initialize SQLite Database
-const db = new Database(process.env.DATABASE_PATH || './queue.db');
+// Initialize SQLite Database — stored outside project to survive re-clones
+const fs = require('fs');
+const DB_DIR = process.env.DATABASE_PATH ? path.dirname(process.env.DATABASE_PATH) : path.join(require('os').homedir(), '.vxi-queue');
+if (!fs.existsSync(DB_DIR)) fs.mkdirSync(DB_DIR, { recursive: true });
+const DB_PATH = process.env.DATABASE_PATH || path.join(DB_DIR, 'queue.db');
+const db = new Database(DB_PATH);
+console.log(`Database: ${DB_PATH}`);
 
 // Create tables
 db.exec(`

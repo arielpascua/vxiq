@@ -132,13 +132,13 @@ export default function LiveQueuePage() {
     return () => clearInterval(carouselRef.current);
   }, []);
 
-  // Filter called items that should still be visible (within 30 seconds)
+  // Filter called items that should still be visible (within 15 seconds)
   const visibleCalledQueue = queue.filter(q => {
     if (q.status !== 'called') return false;
     const calledAt = calledTimestampsRef.current[q.id];
-    if (!calledAt) return true; // Show if no timestamp (just loaded)
+    if (!calledAt) return true;
     const elapsed = Date.now() - calledAt;
-    return elapsed < 30000; // Show for 30 seconds
+    return elapsed < 15000;
   });
 
   // Calculate opacity for fading effect
@@ -146,10 +146,9 @@ export default function LiveQueuePage() {
     const calledAt = calledTimestampsRef.current[id];
     if (!calledAt) return 1;
     const elapsed = Date.now() - calledAt;
-    if (elapsed < 25000) return 1; // Full opacity for first 25 seconds
-    if (elapsed >= 30000) return 0; // Hidden after 30 seconds
-    // Fade out during last 5 seconds
-    return 1 - ((elapsed - 25000) / 5000);
+    if (elapsed < 12000) return 1;
+    if (elapsed >= 15000) return 0;
+    return 1 - ((elapsed - 12000) / 3000);
   };
 
   // Force re-render for opacity updates

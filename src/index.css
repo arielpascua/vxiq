@@ -109,3 +109,9 @@ input:focus, select:focus {
 .press-effect:active {
   transform: scale(0.97);
 }
+
+/* NOW CALLING card fade: visible 12s then fade out over 3s */
+@keyframes calledFade {
+  0%, 80% { opacity: 1; }
+  100% { opacity: 0; }
+}

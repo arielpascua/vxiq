@@ -355,6 +355,16 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
+// Auto-cleanup: remove completed entries older than 24 hours every hour
+setInterval(() => {
+  try {
+    const result = db.prepare("DELETE FROM queue WHERE created_at < datetime('now', '-1 day')").run();
+    if (result.changes > 0) console.log(`Auto-cleanup: removed ${result.changes} old queue entries`);
+  } catch (err) {
+    console.error('Auto-cleanup error:', err);
+  }
+}, 60 * 60 * 1000); // Every hour
+
 app.listen(PORT, () => {
   console.log(`🚀 VXI Queue System running on port ${PORT}`);
 });

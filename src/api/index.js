@@ -62,7 +62,22 @@ export const queueAPI = {
   }),
 };
 
-// TTS Function
+// TTS Function — preload voices to avoid race condition
+let cachedVoice = null;
+const loadVoice = () => {
+  const voices = window.speechSynthesis?.getVoices() || [];
+  cachedVoice = voices.find(v =>
+    v.name.includes('Google') ||
+    v.name.includes('Microsoft') ||
+    v.name.includes('Samantha') ||
+    v.lang.startsWith('en')
+  ) || null;
+};
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+  loadVoice();
+  window.speechSynthesis.addEventListener('voiceschanged', loadVoice);
+}
+
 export const speak = (text, rate = 0.85) => {
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
@@ -70,17 +85,7 @@ export const speak = (text, rate = 0.85) => {
     utterance.rate = rate;
     utterance.pitch = 1;
     utterance.volume = 1;
-    
-    // Try to get a good voice
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v => 
-      v.name.includes('Google') || 
-      v.name.includes('Microsoft') || 
-      v.name.includes('Samantha') ||
-      v.lang.startsWith('en')
-    );
-    if (preferredVoice) utterance.voice = preferredVoice;
-    
+    if (cachedVoice) utterance.voice = cachedVoice;
     window.speechSynthesis.speak(utterance);
   }
 };

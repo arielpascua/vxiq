@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeft, MapPin, DoorOpen, ListOrdered, Plus, Pencil, Trash2,
-  Save, X, Check, Eye, EyeOff, Building
+  Save, X, Check, Eye, EyeOff, Building, AlertTriangle
 } from 'lucide-react';
 import { sitesAPI, roomsAPI, stepsAPI } from '../api';
 
@@ -385,6 +385,7 @@ export default function SettingsPage() {
   const [rooms, setRooms] = useState([]);
   const [steps, setSteps] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showConfirm, setShowConfirm] = useState(null); // { message, onConfirm }
 
   const loadData = async () => {
     setLoading(true);
@@ -425,10 +426,11 @@ export default function SettingsPage() {
     loadData();
   };
 
-  const handleDeleteSite = async (id) => {
-    if (!confirm('Are you sure you want to delete this site?')) return;
-    await sitesAPI.delete(id);
-    loadData();
+  const handleDeleteSite = (id) => {
+    setShowConfirm({
+      message: 'Are you sure you want to delete this site?',
+      onConfirm: async () => { await sitesAPI.delete(id); loadData(); setShowConfirm(null); }
+    });
   };
 
   // Room handlers
@@ -448,10 +450,11 @@ export default function SettingsPage() {
     loadData();
   };
 
-  const handleDeleteRoom = async (id) => {
-    if (!confirm('Are you sure you want to delete this room?')) return;
-    await roomsAPI.delete(id);
-    loadData();
+  const handleDeleteRoom = (id) => {
+    setShowConfirm({
+      message: 'Are you sure you want to delete this room?',
+      onConfirm: async () => { await roomsAPI.delete(id); loadData(); setShowConfirm(null); }
+    });
   };
 
   // Step handlers
@@ -471,10 +474,11 @@ export default function SettingsPage() {
     loadData();
   };
 
-  const handleDeleteStep = async (id) => {
-    if (!confirm('Are you sure you want to delete this step?')) return;
-    await stepsAPI.delete(id);
-    loadData();
+  const handleDeleteStep = (id) => {
+    setShowConfirm({
+      message: 'Are you sure you want to delete this step?',
+      onConfirm: async () => { await stepsAPI.delete(id); loadData(); setShowConfirm(null); }
+    });
   };
 
   const tabs = [
@@ -663,6 +667,35 @@ export default function SettingsPage() {
           </ul>
         </div>
       </div>
+
+      {/* Confirm Dialog */}
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-vxi-black-100 border border-vxi-white-300/20 rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-scale-in">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-red-500/20 p-2 rounded-full">
+                <AlertTriangle className="w-5 h-5 text-red-400" />
+              </div>
+              <h3 className="text-lg font-bold text-vxi-white">Confirm Delete</h3>
+            </div>
+            <p className="text-vxi-white-300 mb-6">{showConfirm.message}</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowConfirm(null)}
+                className="px-4 py-2 bg-vxi-black-50 border border-vxi-white-300/20 rounded-lg text-vxi-white-200 hover:bg-vxi-black-400 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={showConfirm.onConfirm}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-all"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

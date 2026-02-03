@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Settings, Bell, ChevronRight, ChevronLeft, LayoutGrid } from 'lucide-react';
-import { sitesAPI, queueAPI } from '../api';
+import { sitesAPI, queueAPI, speak } from '../api';
 
 export default function LiveQueuePage() {
   const [sites, setSites] = useState([]);
@@ -78,6 +78,11 @@ export default function LiveQueuePage() {
           setFlashId(id);
           setTimeout(() => setFlashId(null), 5000);
           newTimestamps[id] = now; // Record when this was called
+          // TTS announcement on TV
+          const item = queueData.find(q => q.id === id);
+          if (item) {
+            speak(`${item.candidate_name}, please proceed to ${item.room_number} for your ${item.step_name}.`);
+          }
         }
       });
 
@@ -133,31 +138,25 @@ export default function LiveQueuePage() {
   }, []);
 
   // Filter called items that should still be visible (within 15 seconds)
-  const visibleCalledQueue = queue.filter(q => {
-    if (q.status !== 'called') return false;
-    const calledAt = calledTimestampsRef.current[q.id];
-    if (!calledAt) return true;
-    const elapsed = Date.now() - calledAt;
-    return elapsed < 15000;
-  });
+  const [visibleCalledIds, setVisibleCalledIds] = useState(new Set());
 
-  // Calculate opacity for fading effect
-  const getCalledItemOpacity = (id) => {
-    const calledAt = calledTimestampsRef.current[id];
-    if (!calledAt) return 1;
-    const elapsed = Date.now() - calledAt;
-    if (elapsed < 12000) return 1;
-    if (elapsed >= 15000) return 0;
-    return 1 - ((elapsed - 12000) / 3000);
-  };
-
-  // Force re-render for opacity updates
   useEffect(() => {
-    const fadeInterval = setInterval(() => {
-      setCurrentTime(new Date()); // Triggers re-render
-    }, 500);
-    return () => clearInterval(fadeInterval);
-  }, []);
+    // Check every 2 seconds which called items should still be visible
+    const checkInterval = setInterval(() => {
+      const now = Date.now();
+      const stillVisible = new Set();
+      queue.filter(q => q.status === 'called').forEach(q => {
+        const calledAt = calledTimestampsRef.current[q.id];
+        if (!calledAt || now - calledAt < 15000) stillVisible.add(q.id);
+      });
+      setVisibleCalledIds(stillVisible);
+    }, 2000);
+    return () => clearInterval(checkInterval);
+  }, [queue]);
+
+  const visibleCalledQueue = queue.filter(q =>
+    q.status === 'called' && visibleCalledIds.has(q.id)
+  );
 
   const applicantQueue = queue.filter(q => q.status === 'waiting' || q.status === 'ongoing' || q.status === 'called');
   const totalPages = Math.ceil(applicantQueue.length / itemsPerPage);
@@ -283,7 +282,7 @@ export default function LiveQueuePage() {
               {visibleCalledQueue.slice(0, 4).map(item => (
                 <div
                   key={item.id}
-                  style={{ opacity: getCalledItemOpacity(item.id), transition: 'opacity 0.5s ease-out' }}
+                  style={{ animation: 'calledFade 15s ease-out forwards' }}
                   className={`bg-gradient-to-r from-vxi-orange-500/20 to-vxi-orange-600/5 border-3 border-vxi-orange-500 rounded-2xl p-4 shadow-xl animate-calling-glow ${
                     flashId === item.id ? 'ring-4 ring-vxi-orange-400/50 scale-[1.02]' : ''
                   }`}

@@ -114,15 +114,27 @@ export default function AdminPage() {
     return () => clearInterval(timer);
   }, []);
 
+  const getElapsedSeconds = (timestamp) => {
+    if (!timestamp) return 0;
+    return Math.floor((now - new Date(timestamp + 'Z').getTime()) / 1000);
+  };
+
   const getElapsedTime = (createdAt) => {
+    const elapsed = getElapsedSeconds(createdAt);
     if (!createdAt) return '--:--';
-    const elapsed = Math.floor((now - new Date(createdAt + 'Z').getTime()) / 1000);
     if (elapsed < 0) return '00:00';
     const hrs = Math.floor(elapsed / 3600);
     const mins = Math.floor((elapsed % 3600) / 60);
     const secs = elapsed % 60;
     const pad = (n) => n.toString().padStart(2, '0');
     return hrs > 0 ? `${pad(hrs)}:${pad(mins)}:${pad(secs)}` : `${pad(mins)}:${pad(secs)}`;
+  };
+
+  const getWaitColor = (createdAt) => {
+    const elapsed = getElapsedSeconds(createdAt);
+    if (elapsed >= 3600) return 'text-red-400 border-red-500/50'; // 60+ min
+    if (elapsed >= 1800) return 'text-amber-400 border-amber-500/50'; // 30+ min
+    return 'text-vxi-white-400 border-vxi-white-300/20';
   };
 
   // Save filter to localStorage for cross-page persistence and sync with form
@@ -496,6 +508,22 @@ export default function AdminPage() {
             </div>
           </div>
 
+          {/* Step summary counts */}
+          {filteredQueue.length > 0 && (
+            <div className="flex flex-wrap gap-2 px-4 py-2 bg-vxi-black-200/50 border-b border-vxi-white-300/10">
+              {steps.filter(s => s.is_active).map(step => {
+                const count = filteredQueue.filter(q => q.step_id === step.id).length;
+                if (count === 0) return null;
+                return (
+                  <span key={step.id} className="inline-flex items-center gap-1.5 text-xs bg-vxi-black-50 px-2.5 py-1 rounded-full border border-vxi-white-300/10">
+                    <span className="text-vxi-orange-400 font-semibold">{count}</span>
+                    <span className="text-vxi-white-300">{step.name}</span>
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
           <div className="divide-y divide-vxi-white-300/10 max-h-[60vh] sm:max-h-[600px] overflow-y-auto">
             {loading ? (
               <div className="p-8 sm:p-12 text-center text-vxi-white-400">
@@ -576,8 +604,8 @@ export default function AdminPage() {
                             {item.room_number}
                           </span>
                           <span className="text-vxi-orange-400 font-medium truncate">{item.step_name}</span>
-                          <span className="flex items-center gap-1 font-mono text-xs bg-vxi-black-50 px-2 py-0.5 rounded-lg border border-vxi-white-300/20" title="Overall time">
-                            <Timer className="w-3 h-3 text-vxi-white-400" />
+                          <span className={`flex items-center gap-1 font-mono text-xs bg-vxi-black-50 px-2 py-0.5 rounded-lg border ${getWaitColor(item.created_at)}`} title="Overall time">
+                            <Timer className="w-3 h-3" />
                             {getElapsedTime(item.created_at)}
                           </span>
                           <span className="flex items-center gap-1 font-mono text-xs bg-vxi-black-50 px-2 py-0.5 rounded-lg border border-vxi-orange-500/30" title="Current step time">

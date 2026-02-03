@@ -75,25 +75,23 @@ export default function LiveQueuePage() {
       const now = Date.now();
       const newTimestamps = { ...calledTimestampsRef.current };
 
-      currentCalledIds.forEach(id => {
+      // Check ALL called candidates for new or repeated calls
+      queueData.filter(q => q.status === 'called').forEach(item => {
+        const id = item.id;
+        const callTimeKey = item.called_at ? `${id}-${item.called_at}` : `${id}-${now}`;
+
+        // Flash effect for newly called candidates
         if (!lastCalledIdsRef.current.has(id)) {
           setFlashId(id);
           setTimeout(() => setFlashId(null), 5000);
-          newTimestamps[id] = now; // Record when this was called
+          newTimestamps[id] = now;
+        }
 
-          // TTS announcement on TV - this is the primary audio source
-          const item = queueData.find(q => q.id === id);
-          if (item) {
-            // Use called_at timestamp as unique key to prevent duplicate announcements
-            // If called_at is missing (shouldn't happen), use id with current time
-            const callTimeKey = item.called_at ? `${id}-${item.called_at}` : `${id}-${now}`;
-
-            // Announce if this specific call hasn't been announced yet
-            if (!announcedCallTimesRef.current.has(callTimeKey)) {
-              announcedCallTimesRef.current.add(callTimeKey);
-              speak(`${item.candidate_name}, please proceed to ${item.room_number} for your ${item.step_name}.`);
-            }
-          }
+        // TTS announcement - announce if this specific call time hasn't been announced
+        // This handles both new calls AND "call again" (which updates called_at)
+        if (!announcedCallTimesRef.current.has(callTimeKey)) {
+          announcedCallTimesRef.current.add(callTimeKey);
+          speak(`${item.candidate_name}, please proceed to ${item.room_number} for your ${item.step_name}.`);
         }
       });
 

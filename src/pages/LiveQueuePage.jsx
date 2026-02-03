@@ -271,15 +271,23 @@ export default function LiveQueuePage() {
 
       {/* Main Content - Fixed height, no scroll */}
       <div className="flex-1 p-3 flex flex-col overflow-hidden">
-        {/* Now Calling Section - Fades after 30 seconds */}
+        {/* Now Calling Section - Shows ALL called candidates, fades after 15 seconds */}
         {visibleCalledQueue.length > 0 && (
           <div className="mb-4 flex-shrink-0">
             <h2 className="text-2xl font-bold text-vxi-orange-500 mb-3 flex items-center gap-3 animate-pulse">
               <Bell className="w-6 h-6 animate-bounce" />
               NOW CALLING
+              <span className="bg-vxi-orange-500 text-white text-lg px-3 py-0.5 rounded-full font-bold">
+                {visibleCalledQueue.length}
+              </span>
             </h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {visibleCalledQueue.slice(0, 4).map(item => (
+            <div className={`grid gap-3 ${
+              visibleCalledQueue.length === 1 ? 'grid-cols-1' :
+              visibleCalledQueue.length === 2 ? 'grid-cols-2' :
+              visibleCalledQueue.length <= 4 ? 'grid-cols-2 lg:grid-cols-4' :
+              'grid-cols-2 lg:grid-cols-4'
+            }`}>
+              {visibleCalledQueue.map(item => (
                 <div
                   key={item.id}
                   style={{ animation: 'calledFade 15s ease-out forwards' }}

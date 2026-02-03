@@ -21,7 +21,7 @@ export default function LiveQueuePage() {
   const [isConnected, setIsConnected] = useState(true);
 
   // Use refs to track state without causing re-renders
-  const lastCalledIdsRef = useRef(new Set());
+  const lastCallCountsRef = useRef({}); // Track call_count per ID to detect re-calls
   const calledTimestampsRef = useRef({});
   const applicantGridRef = useRef(null);
 
@@ -65,36 +65,37 @@ export default function LiveQueuePage() {
     try {
       const queueData = await queueAPI.getAll(selectedSite);
 
-      const currentCalledIds = new Set(
-        queueData.filter(q => q.status === 'called').map(q => q.id)
-      );
-
-      // Track new calls with timestamps
+      // Track new calls AND re-calls by comparing call_count
       const now = Date.now();
       const newTimestamps = { ...calledTimestampsRef.current };
+      const newCallCounts = {};
 
-      currentCalledIds.forEach(id => {
-        if (!lastCalledIdsRef.current.has(id)) {
-          setFlashId(id);
+      queueData.filter(q => q.status === 'called').forEach(item => {
+        const prevCallCount = lastCallCountsRef.current[item.id] || 0;
+        const currentCallCount = item.call_count || 0;
+        newCallCounts[item.id] = currentCallCount;
+
+        // Trigger if this is a new call OR if call_count increased (re-call / "Again")
+        if (currentCallCount > prevCallCount) {
+          setFlashId(item.id);
           setTimeout(() => setFlashId(null), 5000);
-          newTimestamps[id] = now; // Record when this was called
+          newTimestamps[item.id] = now; // Reset timestamp for NOW CALLING visibility
           // TTS announcement on TV
-          const item = queueData.find(q => q.id === id);
-          if (item) {
-            speak(`${item.candidate_name}, please proceed to ${item.room_number} for your ${item.step_name}.`);
-          }
+          speak(`${item.candidate_name}, please proceed to ${item.room_number} for your ${item.step_name}.`);
         }
       });
 
       // Clean up old timestamps for items no longer called
       Object.keys(newTimestamps).forEach(id => {
-        if (!currentCalledIds.has(parseInt(id))) {
+        const idNum = parseInt(id);
+        const stillCalled = queueData.some(q => q.id === idNum && q.status === 'called');
+        if (!stillCalled) {
           delete newTimestamps[id];
         }
       });
 
       calledTimestampsRef.current = newTimestamps;
-      lastCalledIdsRef.current = currentCalledIds;
+      lastCallCountsRef.current = newCallCounts;
       setQueue(queueData);
       setLastUpdate(new Date());
       setIsConnected(true);

@@ -118,6 +118,46 @@ export default function LiveQueuePage() {
     return () => clearInterval(timer);
   }, []);
 
+  // Prevent screensaver/screen lock using Wake Lock API
+  useEffect(() => {
+    let wakeLock = null;
+
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+          console.log('Wake Lock acquired - screen will stay on');
+          wakeLock.addEventListener('release', () => {
+            console.log('Wake Lock released');
+          });
+        } else {
+          console.log('Wake Lock API not supported');
+        }
+      } catch (err) {
+        console.error('Wake Lock request failed:', err);
+      }
+    };
+
+    // Request wake lock on mount
+    requestWakeLock();
+
+    // Re-acquire wake lock when page becomes visible again (e.g., after tab switch)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        requestWakeLock();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup: release wake lock and remove listener
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (wakeLock) {
+        wakeLock.release();
+      }
+    };
+  }, []);
+
   // Auto-carousel for applicants
   const carouselRef = useRef(null);
   const queueRef = useRef(queue);

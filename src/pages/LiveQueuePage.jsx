@@ -425,17 +425,9 @@ export default function LiveQueuePage() {
                     boxShadow: `0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03)`,
                   }}
                 >
-                  {/* Top section: Queue number badge */}
+                  {/* Top section: Status dot */}
                   <div className={`flex items-center justify-center ${sz.pad} pb-0`}>
-                    <div
-                      className={`inline-flex items-center ${sz.gap} ${sz.metaPad} ${sz.round}`}
-                      style={{ background: `${statusColor}15`, border: `1px solid ${statusColor}40` }}
-                    >
-                      <div className={`${sz.dot} rounded-full flex-shrink-0`} style={{ background: statusColor, boxShadow: `0 0 8px ${statusColor}80` }} />
-                      <span className={`${sz.num} font-extrabold`} style={{ color: statusColor }}>
-                        #{(currentPage * itemsPerPage) + index + 1}
-                      </span>
-                    </div>
+                    <div className={`${sz.dot} rounded-full flex-shrink-0`} style={{ background: statusColor, boxShadow: `0 0 8px ${statusColor}80` }} />
                   </div>
 
                   {/* Center: Candidate name — the hero */}

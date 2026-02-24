@@ -141,6 +141,7 @@ export default function AdminPage() {
   // Save filter to localStorage for cross-page persistence and sync with form
   useEffect(() => {
     localStorage.setItem('vxi-site-filter', filter);
+    setStepFilter(null); // Reset step filter when site changes
     if (filter) {
       setForm(f => ({ ...f, site_id: filter, room_id: '' }));
     }
@@ -288,7 +289,7 @@ export default function AdminPage() {
   const filteredQueue = queue
     .filter(q => !filter || q.site_id === parseInt(filter))
     .filter(q => !searchQuery || q.candidate_name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .filter(q => !stepFilter || q.step_id === stepFilter);
+    .filter(q => !stepFilter || parseInt(q.step_id) === parseInt(stepFilter));
 
   return (
     <div className="min-h-screen bg-vxi-black-300 text-vxi-white">
@@ -547,13 +548,13 @@ export default function AdminPage() {
                 </button>
               )}
               {steps.filter(s => s.is_active).map(step => {
-                const allForStep = queue.filter(q => (!filter || q.site_id === parseInt(filter)) && q.step_id === step.id).length;
+                const allForStep = queue.filter(q => (!filter || q.site_id === parseInt(filter)) && parseInt(q.step_id) === parseInt(step.id)).length;
                 if (allForStep === 0) return null;
-                const isActive = stepFilter === step.id;
+                const isActive = parseInt(stepFilter) === parseInt(step.id);
                 return (
                   <button
                     key={step.id}
-                    onClick={() => setStepFilter(isActive ? null : step.id)}
+                    onClick={() => setStepFilter(isActive ? null : parseInt(step.id))}
                     className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-all hover:scale-[1.02] active:scale-95 ${
                       isActive
                         ? 'bg-vxi-orange-500 border-vxi-orange-500 text-white font-semibold'

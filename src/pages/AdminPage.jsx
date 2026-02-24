@@ -28,6 +28,7 @@ export default function AdminPage() {
   const [toast, setToast] = useState(null); // { message, type: 'success'|'error'|'info' }
   const [showConfirm, setShowConfirm] = useState(null); // { message, onConfirm }
   const [editingName, setEditingName] = useState(null); // { id, name }
+  const [stepFilter, setStepFilter] = useState(null); // null = all steps
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -286,7 +287,8 @@ export default function AdminPage() {
 
   const filteredQueue = queue
     .filter(q => !filter || q.site_id === parseInt(filter))
-    .filter(q => !searchQuery || q.candidate_name.toLowerCase().includes(searchQuery.toLowerCase()));
+    .filter(q => !searchQuery || q.candidate_name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter(q => !stepFilter || q.step_id === stepFilter);
 
   return (
     <div className="min-h-screen bg-vxi-black-300 text-vxi-white">
@@ -533,17 +535,34 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Step summary counts */}
-          {filteredQueue.length > 0 && (
+          {/* Step filter buttons */}
+          {queue.filter(q => !filter || q.site_id === parseInt(filter)).length > 0 && (
             <div className="flex flex-wrap gap-2 px-4 py-2 bg-vxi-black-200/50 border-b border-vxi-white-300/10">
+              {stepFilter && (
+                <button
+                  onClick={() => setStepFilter(null)}
+                  className="inline-flex items-center gap-1.5 text-xs bg-vxi-orange-500 text-white px-2.5 py-1 rounded-full border border-vxi-orange-500 font-semibold hover:bg-vxi-orange-600 transition-all"
+                >
+                  All Steps ×
+                </button>
+              )}
               {steps.filter(s => s.is_active).map(step => {
-                const count = filteredQueue.filter(q => q.step_id === step.id).length;
-                if (count === 0) return null;
+                const allForStep = queue.filter(q => (!filter || q.site_id === parseInt(filter)) && q.step_id === step.id).length;
+                if (allForStep === 0) return null;
+                const isActive = stepFilter === step.id;
                 return (
-                  <span key={step.id} className="inline-flex items-center gap-1.5 text-xs bg-vxi-black-50 px-2.5 py-1 rounded-full border border-vxi-white-300/10">
-                    <span className="text-vxi-orange-400 font-semibold">{count}</span>
-                    <span className="text-vxi-white-300">{step.name}</span>
-                  </span>
+                  <button
+                    key={step.id}
+                    onClick={() => setStepFilter(isActive ? null : step.id)}
+                    className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-all hover:scale-[1.02] active:scale-95 ${
+                      isActive
+                        ? 'bg-vxi-orange-500 border-vxi-orange-500 text-white font-semibold'
+                        : 'bg-vxi-black-50 border-vxi-white-300/10 hover:border-vxi-orange-500/50 hover:bg-vxi-orange-500/10'
+                    }`}
+                  >
+                    <span className={`font-semibold ${isActive ? 'text-white' : 'text-vxi-orange-400'}`}>{allForStep}</span>
+                    <span className={isActive ? 'text-white' : 'text-vxi-white-300'}>{step.name}</span>
+                  </button>
                 );
               })}
             </div>

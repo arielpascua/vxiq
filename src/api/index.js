@@ -62,8 +62,11 @@ export const queueAPI = {
   }),
 };
 
-// TTS Function — preload voices to avoid race condition
+// TTS Function — robust implementation with Chrome bug workarounds
 let cachedVoice = null;
+let ttsQueue = [];
+let ttsActive = false;
+
 const loadVoice = () => {
   const voices = window.speechSynthesis?.getVoices() || [];
   cachedVoice = voices.find(v =>
@@ -71,21 +74,54 @@ const loadVoice = () => {
     v.name.includes('Microsoft') ||
     v.name.includes('Samantha') ||
     v.lang.startsWith('en')
-  ) || null;
+  ) || voices[0] || null;
 };
+
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
   loadVoice();
   window.speechSynthesis.addEventListener('voiceschanged', loadVoice);
+
+  // Fix #1: Chrome 15-second bug — speechSynthesis silently stops after inactivity.
+  // Resume every 5 seconds to keep the engine alive.
+  setInterval(() => {
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
+    // Also re-cache voices periodically in case they went stale
+    if (!cachedVoice) loadVoice();
+  }, 5000);
 }
 
+const processQueue = () => {
+  if (ttsActive || ttsQueue.length === 0) return;
+  ttsActive = true;
+  const { text, rate } = ttsQueue.shift();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = rate;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  if (cachedVoice) utterance.voice = cachedVoice;
+
+  utterance.onend = () => {
+    ttsActive = false;
+    processQueue();
+  };
+  utterance.onerror = () => {
+    ttsActive = false;
+    processQueue();
+  };
+
+  // Fix #2: Resume before speaking to recover from Chrome hang state
+  window.speechSynthesis.resume();
+  window.speechSynthesis.speak(utterance);
+};
+
 export const speak = (text, rate = 0.85) => {
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = rate;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-    if (cachedVoice) utterance.voice = cachedVoice;
-    window.speechSynthesis.speak(utterance);
-  }
+  if (!('speechSynthesis' in window)) return;
+  // Clear any pending queue and cancel current — new call takes priority
+  ttsQueue = [{ text, rate }];
+  ttsActive = false;
+  window.speechSynthesis.cancel();
+  // Small delay to let cancel() settle before speaking
+  setTimeout(processQueue, 150);
 };

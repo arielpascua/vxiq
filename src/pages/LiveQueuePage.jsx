@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Settings, Bell, ChevronRight, ChevronLeft, LayoutGrid } from 'lucide-react';
+import { Users, Settings, Bell, ChevronRight, ChevronLeft, LayoutGrid, Volume2 } from 'lucide-react';
 import { sitesAPI, queueAPI, speak } from '../api';
 
 export default function LiveQueuePage() {
@@ -11,6 +11,7 @@ export default function LiveQueuePage() {
   const [queue, setQueue] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [flashId, setFlashId] = useState(null);
+  const [audioEnabled, setAudioEnabled] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(() => {
     const saved = localStorage.getItem('vxi-items-per-page');
@@ -456,6 +457,26 @@ export default function LiveQueuePage() {
           )}
         </div>
       </div>
+
+      {/* Audio enable prompt — browsers block autoplay until user interacts */}
+      {!audioEnabled && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <button
+            onClick={() => {
+              // Trigger a silent utterance to unlock audio context
+              const u = new SpeechSynthesisUtterance(' ');
+              u.volume = 0;
+              window.speechSynthesis.speak(u);
+              setAudioEnabled(true);
+            }}
+            className="flex flex-col items-center gap-4 bg-vxi-orange-500 hover:bg-vxi-orange-600 text-white px-12 py-8 rounded-2xl shadow-2xl transition-all hover:scale-105 active:scale-95"
+          >
+            <Volume2 className="w-16 h-16" />
+            <span className="text-3xl font-bold">Tap to Enable Audio</span>
+            <span className="text-lg opacity-80">Required for announcements</span>
+          </button>
+        </div>
+      )}
 
       {/* Footer - Larger text for TV visibility */}
       <footer className="flex-shrink-0 bg-vxi-black-100/90 backdrop-blur-md px-6 py-3" style={{ borderTop: '2px solid transparent', borderImage: 'linear-gradient(90deg, transparent, #FF6B35, transparent) 1' }}>

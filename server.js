@@ -352,6 +352,24 @@ app.post('/api/queue/cleanup', (req, res) => {
   res.json({ deleted: result.changes });
 });
 
+// Database backup endpoint
+app.get('/api/backup', async (req, res) => {
+  try {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const backupFilename = `vxi-queue-backup-${timestamp}.db`;
+    const backupPath = path.join(DB_DIR, backupFilename);
+    await db.backup(backupPath);
+    res.download(backupPath, backupFilename, (err) => {
+      if (err) console.error('Backup download error:', err);
+      // Clean up the temp backup file after download
+      try { fs.unlinkSync(backupPath); } catch {}
+    });
+  } catch (err) {
+    console.error('Backup failed:', err);
+    res.status(500).json({ error: 'Backup failed' });
+  }
+});
+
 // Serve static files in production
 app.use(express.static(path.join(__dirname, 'dist')));
 

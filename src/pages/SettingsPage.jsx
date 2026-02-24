@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeft, MapPin, DoorOpen, ListOrdered, Plus, Pencil, Trash2,
-  Save, X, Check, Eye, EyeOff, Building, AlertTriangle
+  Save, X, Check, Eye, EyeOff, Building, AlertTriangle, Download
 } from 'lucide-react';
 import { sitesAPI, roomsAPI, stepsAPI } from '../api';
 
@@ -638,6 +638,22 @@ export default function SettingsPage() {
             )}
           </>
         )}
+
+        {/* Database Backup */}
+        <div className="mt-4 sm:mt-6 bg-vxi-black-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-vxi-white-300/20 shadow-xl flex items-center justify-between gap-4">
+          <div>
+            <h3 className="font-bold text-vxi-white mb-1 text-base sm:text-lg">Database Backup</h3>
+            <p className="text-xs sm:text-sm text-vxi-white-400">Download a copy of the database including all sites, rooms, steps, and queue history.</p>
+          </div>
+          <a
+            href="/api/backup"
+            download
+            className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 bg-vxi-orange-500 hover:bg-vxi-orange-600 text-white font-semibold rounded-xl transition-all hover:scale-[1.02] active:scale-95 shadow-lg"
+          >
+            <Download className="w-4 h-4" />
+            Download Backup
+          </a>
+        </div>
 
         {/* Help Text */}
         <div className="mt-4 sm:mt-6 glass-card rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-vxi-orange-500/30 shadow-xl">
